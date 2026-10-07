@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account — {{ app_brand }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="auth-page">
+        <!-- Hero Branding Side (Left) -->
+        <div class="auth-hero-side">
+            <div class="hero-brand">
+                <div class="brand-icon">CP</div>
+                <h1>{{ app_brand }}</h1>
+            </div>
+
+            <div class="hero-center-content">
+                <div class="hero-pill-badge">
+                    <span>🚀</span> Quick Registration
+                </div>
+                <h2>Join the Smart Campus Movement</h2>
+                <p>
+                    Report broken lab displays, Wi-Fi outages, AC faults, or electrical hazards in seconds. Get AI-powered status updates from notification to full resolution.
+                </p>
+
+                <div class="feature-checkpoints">
+                    <div class="checkpoint-item">
+                        <div class="check-circle">✓</div>
+                        <span>Instant issue reporting with image attachments</span>
+                    </div>
+                    <div class="checkpoint-item">
+                        <div class="check-circle">✓</div>
+                        <span>Transparent audit log and resolution ratings</span>
+                    </div>
+                    <div class="checkpoint-item">
+                        <div class="check-circle">✓</div>
+                        <span>Role-tailored dashboards for students, staff, and admins</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hero-footer-note">
+                <span>Secure Authentication · Argon2/PBKDF2 Password Hashing · Role Authorization</span>
+            </div>
+        </div>
+
+        <!-- Registration Form Side (Right) -->
+        <div class="auth-form-side">
+            <div class="auth-card" style="max-width: 480px;">
+                <div class="auth-header">
+                    <h3>Get Started</h3>
+                    <p>Create your institutional account</p>
+                </div>
+
+                <!-- Flash Messages -->
+                <div class="flash-container">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }}">
+                                    <span>{{ message }}</span>
+                                    <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                </div>
+
+                <form method="POST" action="{{ url_for('auth.register') }}">
+                    <div class="form-group">
+                        <label class="form-label" for="name">Full Name</label>
+                        <input type="text" id="name" name="name" class="form-control" placeholder="e.g. Maya Chen" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="email">Institutional Email</label>
+                        <input type="email" id="email" name="email" class="form-control" placeholder="name@campuspulse.edu" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Account Role</label>
+                        <div class="role-selector">
+                            <label class="role-option">
+                                <input type="radio" name="role" value="student" checked>
+                                <div class="role-box">
+                                    <span class="role-icon">🎓</span>
+                                    <span>Student</span>
+                                </div>
+                            </label>
+
+                            <label class="role-option">
+                                <input type="radio" name="role" value="maintenance">
+                                <div class="role-box">
+                                    <span class="role-icon">🛠️</span>
+                                    <span>Staff</span>
+                                </div>
+                            </label>
+
+                            <label class="role-option">
+                                <input type="radio" name="role" value="admin">
+                                <div class="role-box">
+                                    <span class="role-icon">👑</span>
+                                    <span>Admin</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="password">Password</label>
+                        <input type="password" id="password" name="password" class="form-control" placeholder="Minimum 6 characters" minlength="6" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="confirm_password">Confirm Password</label>
+                        <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="Repeat your password" minlength="6" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 8px;">
+                        <span>Create Account</span>
+                        <span>→</span>
+                    </button>
+                </form>
+
+                <div style="margin-top: 20px; text-align: center; font-size: 0.88rem; color: var(--text-muted);">
+                    Already registered? 
+                    <a href="{{ url_for('auth.login') }}" style="font-weight: 600;">Sign In here</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

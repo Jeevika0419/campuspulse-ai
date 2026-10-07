@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Maintenance Dispatch{% endblock %}
+{% block page_heading %}Field Engineering & Ops Dispatch{% endblock %}
+
+{% block content %}
+<!-- Maintenance Stats Grid -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-info">
+            <div class="stat-label">Assigned Work Orders</div>
+            <div class="stat-value">{{ stats.total_assigned }}</div>
+        </div>
+        <div class="stat-icon icon-blue">📋</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-info">
+            <div class="stat-label">Pending Start</div>
+            <div class="stat-value" style="color: #fbbf24;">{{ stats.pending_start }}</div>
+        </div>
+        <div class="stat-icon icon-amber">⏳</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-info">
+            <div class="stat-label">Active / In Progress</div>
+            <div class="stat-value" style="color: #60a5fa;">{{ stats.in_progress }}</div>
+        </div>
+        <div class="stat-icon icon-cyan">⚡</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-info">
+            <div class="stat-label">Critical Escalations</div>
+            <div class="stat-value" style="color: #f87171;">{{ stats.critical_count }}</div>
+        </div>
+        <div class="stat-icon icon-rose">🚨</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-info">
+            <div class="stat-label">Resolved Work Orders</div>
+            <div class="stat-value" style="color: #34d399;">{{ stats.resolved }}</div>
+        </div>
+        <div class="stat-icon icon-emerald">✅</div>
+    </div>
+</div>
+
+<!-- Active Task Queue -->
+<div class="card">
+    <div class="card-header">
+        <div class="card-title">
+            <span>🛠️</span>
+            <span>Assigned Maintenance Queue</span>
+        </div>
+        <span style="font-size: 0.8rem; color: var(--text-muted);">Priority-ordered queue</span>
+    </div>
+
+    {% if assigned_issues and assigned_issues|length > 0 %}
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Category</th>
+                        <th>Location</th>
+                        <th>Description</th>
+                        <th>Priority</th>
+                        <th>Recurrence Risk</th>
+                        <th>Status</th>
+                        <th>Assigned Team</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for issue in assigned_issues %}
+                        <tr>
+                            <td style="font-weight: 700; color: var(--accent-cyan);">#{{ issue.issue_id }}</td>
+                            <td style="font-weight: 600;">{{ issue.issue_type }}</td>
+                            <td style="color: var(--text-muted); font-size: 0.85rem;">{{ issue.location }}</td>
+                            <td style="font-size: 0.85rem; max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                {{ issue.description }}
+                            </td>
+                            <td>
+                                <span class="badge badge-priority-{{ (issue.priority or 'medium').lower() }}">
+                                    {{ issue.priority or 'Medium' }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge badge-risk-{{ (issue.recurrence_risk or 'low').lower() }}">
+                                    {{ issue.recurrence_risk or 'Low' }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge badge-{{ issue.status.lower().replace(' ', '-') }}">
+                                    {{ issue.status }}
+                                </span>
+                            </td>
+                            <td style="color: var(--text-dim); font-size: 0.82rem;">
+                                {{ issue.assigned_team_name }}
+                            </td>
+                            <td>
+                                <button class="btn btn-primary btn-sm" onclick="alert('Maintenance action workflow (Accept, Status Update, Proof Upload) will be active in Sprint 2!')">
+                                    <span>Manage</span>
+                                </button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">🎉</div>
+            <h3>No Pending Work Orders</h3>
+            <p>All assigned infrastructure repairs are currently up to date! As issues get assigned to your maintenance teams by administration, they will appear in this prioritized queue.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

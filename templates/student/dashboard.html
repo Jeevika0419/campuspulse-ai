@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Student Hub{% endblock %}
+{% block page_heading %}Student Portal{% endblock %}
+
+{% block content %}
+<!-- Welcome Hero -->
+<div class="welcome-hero">
+    <div class="hero-text">
+        <h2>Hello, {{ user_name }} 👋</h2>
+        <p>Report campus infrastructure problems, track real-time resolution progress, and verify fixes.</p>
+    </div>
+    <div>
+        <a href="#report-section" class="btn btn-primary" onclick="alert('Issue reporting module will be activated in Sprint 2! You can view current status and metrics below.')">
+            <span>+</span>
+            <span>Report New Issue</span>
+        </a>
+    </div>
+</div>
+
+<!-- Stats / KPI Cards -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-info">
+            <div class="stat-label">Total Reported</div>
+            <div class="stat-value">{{ stats.total_reported }}</div>
+        </div>
+        <div class="stat-icon icon-cyan">📋</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-info">
+            <div class="stat-label">Active / Open</div>
+            <div class="stat-value">{{ stats.open_issues }}</div>
+        </div>
+        <div class="stat-icon icon-amber">⏳</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-info">
+            <div class="stat-label">Resolved</div>
+            <div class="stat-value">{{ stats.resolved_issues }}</div>
+        </div>
+        <div class="stat-icon icon-emerald">✅</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-info">
+            <div class="stat-label">Reopened</div>
+            <div class="stat-value">{{ stats.reopened_issues }}</div>
+        </div>
+        <div class="stat-icon icon-rose">🔄</div>
+    </div>
+</div>
+
+<!-- Grid Layout: Recent Issues & Notifications -->
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+    <!-- Recent Issues Table Card -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">
+                <span>📝</span>
+                <span>My Submitted Issues</span>
+            </div>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">Real-time tracking</span>
+        </div>
+
+        {% if recent_issues and recent_issues|length > 0 %}
+            <div class="table-responsive">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Issue Type</th>
+                            <th>Location</th>
+                            <th>Severity</th>
+                            <th>Status</th>
+                            <th>Assigned Team</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for issue in recent_issues %}
+                            <tr>
+                                <td style="font-weight: 700; color: var(--accent-cyan);">#{{ issue.issue_id }}</td>
+                                <td style="font-weight: 600;">{{ issue.issue_type }}</td>
+                                <td style="color: var(--text-muted);">{{ issue.location }}</td>
+                                <td>
+                                    <span class="badge badge-priority-{{ issue.severity.lower() }}">
+                                        {{ issue.severity }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-{{ issue.status.lower().replace(' ', '-') }}">
+                                        {{ issue.status }}
+                                    </span>
+                                </td>
+                                <td style="color: var(--text-dim); font-size: 0.85rem;">
+                                    {{ issue.assigned_team_name or 'Pending Assignment' }}
+                                </td>
+                                <td style="color: var(--text-dim); font-size: 0.82rem;">
+                                    {{ issue.created_at.strftime('%b %d, %H:%M') if issue.created_at else 'Recent' }}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">📂</div>
+                <h3>No Issues Reported Yet</h3>
+                <p>Have you noticed a faulty projector, air conditioner leak, or Wi-Fi connectivity issue? Submit your first report to trigger our AI dispatch.</p>
+                <button class="btn btn-outline btn-sm" onclick="alert('Full reporting form with image upload activates in Sprint 2!')">
+                    <span>How reporting works</span>
+                </button>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Student Activity & Tips Sidebar -->
+    <div style="display: flex; flex-direction: column; gap: 24px;">
+        <!-- Notification / Activity Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <span>🔔</span>
+                    <span>Recent Updates</span>
+                </div>
+            </div>
+
+            {% if notifications and notifications|length > 0 %}
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    {% for n in notifications %}
+                        <div style="padding: 12px; border-radius: var(--radius-sm); background: rgba(255, 255, 255, 0.02); border-left: 3px solid var(--accent-cyan);">
+                            <div style="font-weight: 600; font-size: 0.88rem; margin-bottom: 2px;">{{ n.title }}</div>
+                            <div style="font-size: 0.78rem; color: var(--text-muted);">{{ n.message }}</div>
+                            <div style="font-size: 0.7rem; color: var(--text-dim); margin-top: 4px;">
+                                {{ n.created_at.strftime('%b %d, %H:%M') if n.created_at else 'Just now' }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div style="text-align: center; padding: 20px 0; color: var(--text-dim); font-size: 0.85rem;">
+                    No notifications yet.
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Smart Guidelines Card -->
+        <div class="card" style="background: linear-gradient(135deg, rgba(16, 22, 38, 0.9), rgba(15, 30, 50, 0.9));">
+            <div class="card-header">
+                <div class="card-title">
+                    <span>💡</span>
+                    <span>Reporting Tips</span>
+                </div>
+            </div>
+            <ul style="padding-left: 18px; font-size: 0.82rem; color: var(--text-muted); line-height: 1.8;">
+                <li>Specify exact classroom number or floor level.</li>
+                <li>Capture clear pictures for electrical or AC faults.</li>
+                <li>Emergency hazards (e.g. wire spark) are automatically escalated to Critical priority.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

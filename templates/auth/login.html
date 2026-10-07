@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In — {{ app_brand }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="auth-page">
+        <!-- Hero Branding Side (Left) -->
+        <div class="auth-hero-side">
+            <div class="hero-brand">
+                <div class="brand-icon">CP</div>
+                <h1>{{ app_brand }}</h1>
+            </div>
+
+            <div class="hero-center-content">
+                <div class="hero-pill-badge">
+                    <span>⚡</span> Academic Agile + DevOps Platform
+                </div>
+                <h2>Next-Gen Campus Issue Prediction & Resolution</h2>
+                <p>
+                    {{ app_tagline }}
+                    Empowering students, administrators, and maintenance personnel with AI-driven recurring issue prevention and SLA tracking.
+                </p>
+
+                <div class="feature-checkpoints">
+                    <div class="checkpoint-item">
+                        <div class="check-circle">✓</div>
+                        <span>Smart Recurrence Risk Prediction with Machine Learning</span>
+                    </div>
+                    <div class="checkpoint-item">
+                        <div class="check-circle">✓</div>
+                        <span>Real-Time SLA & Escalation Countdown Timers</span>
+                    </div>
+                    <div class="checkpoint-item">
+                        <div class="check-circle">✓</div>
+                        <span>Campus Hotspot Visualization & Automated Dispatch</span>
+                    </div>
+                    <div class="checkpoint-item">
+                        <div class="check-circle">✓</div>
+                        <span>Cloud Architecture Ready for AWS EC2, RDS, & S3</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hero-footer-note">
+                <span>Enterprise DevOps Architecture · Docker · Jenkins CI/CD · AWS</span>
+            </div>
+        </div>
+
+        <!-- Login Form Side (Right) -->
+        <div class="auth-form-side">
+            <div class="auth-card">
+                <div class="auth-header">
+                    <h3>Welcome Back</h3>
+                    <p>Enter your institutional credentials to continue</p>
+                </div>
+
+                <!-- Flash Messages -->
+                <div class="flash-container">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }}">
+                                    <span>{{ message }}</span>
+                                    <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                </div>
+
+                <form method="POST" action="{{ url_for('auth.login') }}">
+                    <div class="form-group">
+                        <label class="form-label" for="email">Institutional Email</label>
+                        <input type="email" id="email" name="email" class="form-control" placeholder="name@campuspulse.edu" required autocomplete="username">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="password">Password</label>
+                        <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required autocomplete="current-password">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 8px;">
+                        <span>Sign In</span>
+                        <span>→</span>
+                    </button>
+                </form>
+
+                <div style="margin-top: 20px; text-align: center; font-size: 0.88rem; color: var(--text-muted);">
+                    Don't have an account? 
+                    <a href="{{ url_for('auth.register') }}" style="font-weight: 600;">Create one here</a>
+                </div>
+
+                <!-- Viva / Quick Demo Login Switcher -->
+                <div class="demo-pill-container">
+                    <div class="demo-pill-title">Quick Demo Login (1-Click Test)</div>
+                    <div class="demo-pills">
+                        <button type="button" class="demo-pill" onclick="fillDemoLogin('admin@campuspulse.edu', 'Admin@123')">
+                            👑 Admin
+                        </button>
+                        <button type="button" class="demo-pill" onclick="fillDemoLogin('staff@campuspulse.edu', 'Staff@123')">
+                            🛠️ Staff
+                        </button>
+                        <button type="button" class="demo-pill" onclick="fillDemoLogin('student@campuspulse.edu', 'Student@123')">
+                            🎓 Student
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

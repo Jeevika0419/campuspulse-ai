@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Command Center{% endblock %}
+{% block page_heading %}Executive Infrastructure Analytics{% endblock %}
+
+{% block content %}
+<!-- Executive Stats Grid -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-info">
+            <div class="stat-label">Total Issues</div>
+            <div class="stat-value">{{ stats.total_issues }}</div>
+        </div>
+        <div class="stat-icon icon-cyan">📊</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-info">
+            <div class="stat-label">Active / In-Flight</div>
+            <div class="stat-value">{{ stats.open_issues }}</div>
+        </div>
+        <div class="stat-icon icon-amber">⏳</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-info">
+            <div class="stat-label">Critical Priority</div>
+            <div class="stat-value" style="color: #f87171;">{{ stats.critical_issues }}</div>
+        </div>
+        <div class="stat-icon icon-rose">🚨</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-info">
+            <div class="stat-label">Successfully Resolved</div>
+            <div class="stat-value" style="color: #34d399;">{{ stats.resolved_issues }}</div>
+        </div>
+        <div class="stat-icon icon-emerald">✅</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-info">
+            <div class="stat-label">High Recurrence Risk</div>
+            <div class="stat-value" style="color: #fbbf24;">{{ stats.recurring_issues }}</div>
+        </div>
+        <div class="stat-icon icon-purple">🤖</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-info">
+            <div class="stat-label">Avg Resolution Time</div>
+            <div class="stat-value">{{ stats.avg_resolution_hours }}<span style="font-size: 1.1rem; color: var(--text-muted);">h</span></div>
+        </div>
+        <div class="stat-icon icon-blue">⏱️</div>
+    </div>
+</div>
+
+<!-- AI Predictive Insight Highlight Banner -->
+<div class="card" style="margin-bottom: 24px; background: linear-gradient(135deg, rgba(20, 27, 49, 0.95), rgba(35, 25, 60, 0.9)); border-color: rgba(139, 92, 246, 0.35);">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(139, 92, 246, 0.2); border: 1px solid rgba(139, 92, 246, 0.4); display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
+                🧠
+            </div>
+            <div>
+                <h4 style="font-size: 1.05rem; margin-bottom: 3px;">CampusPulse AI Engine Ready</h4>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">
+                    Predictive maintenance engine tracks issue type frequency, location clustering, and recurrence probability.
+                </p>
+            </div>
+        </div>
+        <span class="badge badge-risk-low" style="padding: 6px 14px; font-size: 0.82rem;">
+            ● Model Status: Standby / Training Data Ready
+        </span>
+    </div>
+</div>
+
+<!-- Main Split: Recent Issues vs Analytics Sidebars -->
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+    <!-- Recent Issues Table -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">
+                <span>📋</span>
+                <span>Campus Issue Stream</span>
+            </div>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">Live database records</span>
+        </div>
+
+        {% if recent_issues and recent_issues|length > 0 %}
+            <div class="table-responsive">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Category</th>
+                            <th>Location</th>
+                            <th>Reporter</th>
+                            <th>Priority</th>
+                            <th>Recurrence</th>
+                            <th>Status</th>
+                            <th>Assigned Team</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for issue in recent_issues %}
+                            <tr>
+                                <td style="font-weight: 700; color: var(--accent-cyan);">#{{ issue.issue_id }}</td>
+                                <td style="font-weight: 600;">{{ issue.issue_type }}</td>
+                                <td style="color: var(--text-muted); font-size: 0.85rem;">{{ issue.location }}</td>
+                                <td style="font-size: 0.85rem;">{{ issue.reporter_name or 'Anonymous' }}</td>
+                                <td>
+                                    <span class="badge badge-priority-{{ (issue.priority or 'medium').lower() }}">
+                                        {{ issue.priority or 'Medium' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-risk-{{ (issue.recurrence_risk or 'low').lower() }}">
+                                        {{ issue.recurrence_risk or 'Low' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-{{ issue.status.lower().replace(' ', '-') }}">
+                                        {{ issue.status }}
+                                    </span>
+                                </td>
+                                <td style="color: var(--text-dim); font-size: 0.82rem;">
+                                    {{ issue.assigned_team_name or 'Unassigned' }}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">📂</div>
+                <h3>No Issues Currently Logged</h3>
+                <p>The campus database is currently clean. As students and staff log infrastructure issues, they will stream here in real-time with automated AI recurrence risk scoring.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Right Side: Hotspots & Teams -->
+    <div style="display: flex; flex-direction: column; gap: 24px;">
+        <!-- Hotspots Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <span>📍</span>
+                    <span>Campus Hotspots</span>
+                </div>
+                <span style="font-size: 0.75rem; color: var(--text-dim);">By Issue Density</span>
+            </div>
+
+            {% if hotspot_locations and hotspot_locations|length > 0 %}
+                <div class="hotspot-list">
+                    {% for h in hotspot_locations %}
+                        <div class="hotspot-item">
+                            <span class="hotspot-name">{{ h.location }}</span>
+                            <div class="hotspot-bar-container">
+                                <div class="hotspot-bar" style="width: {{ [h.issue_count * 15, 100]|min }}%;"></div>
+                            </div>
+                            <span style="font-size: 0.82rem; font-weight: 700; color: #38bdf8;">
+                                {{ h.issue_count }}
+                            </span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div style="text-align: center; padding: 20px 0; color: var(--text-dim); font-size: 0.85rem;">
+                    No location hotspot clusters yet.
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Maintenance Teams Workload -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <span>🛠️</span>
+                    <span>Maintenance Teams</span>
+                </div>
+                <span style="font-size: 0.75rem; color: var(--text-dim);">Active Tasks</span>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                {% for team in teams %}
+                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: var(--radius-sm); background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle);">
+                        <div>
+                            <div style="font-weight: 600; font-size: 0.86rem;">{{ team.team_name }}</div>
+                            <div style="font-size: 0.72rem; color: var(--text-dim); max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                {{ team.team_description }}
+                            </div>
+                        </div>
+                        <span class="badge" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa;">
+                            {{ team.active_tasks }} Active
+                        </span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
