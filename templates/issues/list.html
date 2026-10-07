@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Issue Registry{% endblock %}
+{% block page_heading %}Campus Issue Registry{% endblock %}
+
+{% block content %}
+<!-- Top Action Bar & Filter Form -->
+<div class="card" style="margin-bottom: 24px;">
+    <form method="GET" action="{{ url_for('issues.list_issues') }}" style="display: flex; flex-direction: column; gap: 16px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+            <!-- Search Input -->
+            <div style="flex: 1; min-width: 240px; position: relative;">
+                <input type="text" name="q" class="form-control" placeholder="Search by Issue ID, description, or keyword..." value="{{ current_filters.q }}">
+            </div>
+
+            <!-- Scope Toggle (for students) -->
+            {% if current_user_role == 'student' %}
+                <div style="display: flex; gap: 8px;">
+                    <a href="{{ url_for('issues.list_issues', scope='my') }}" class="btn btn-sm {% if current_filters.scope == 'my' %}btn-primary{% else %}btn-outline{% endif %}">
+                        My Reports
+                    </a>
+                    <a href="{{ url_for('issues.list_issues', scope='all') }}" class="btn btn-sm {% if current_filters.scope == 'all' %}btn-primary{% else %}btn-outline{% endif %}">
+                        All Campus
+                    </a>
+                </div>
+            {% endif %}
+
+            <div style="display: flex; gap: 10px;">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    <span>🔍 Apply Filters</span>
+                </button>
+                <a href="{{ url_for('issues.list_issues') }}" class="btn btn-outline btn-sm">Reset</a>
+                <a href="{{ url_for('issues.report_issue') }}" class="btn btn-primary btn-sm" style="background: linear-gradient(135deg, #06b6d4, #10b981);">
+                    <span>+ New Issue</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Filter Dropdowns Row -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+            <!-- Status Filter -->
+            <select name="status" class="form-control" style="font-size: 0.85rem; padding: 8px 12px;">
+                <option value="">All Statuses</option>
+                {% for st in ['Reported', 'Under Review', 'Assigned', 'In Progress', 'On Hold', 'Resolved', 'Closed', 'Reopened'] %}
+                    <option value="{{ st }}" {% if current_filters.status == st %}selected{% endif %}>{{ st }}</option>
+                {% endfor %}
+            </select>
+
+            <!-- Severity Filter -->
+            <select name="severity" class="form-control" style="font-size: 0.85rem; padding: 8px 12px;">
+                <option value="">All Severities</option>
+                {% for sev in ['Low', 'Medium', 'High', 'Critical'] %}
+                    <option value="{{ sev }}" {% if current_filters.severity == sev %}selected{% endif %}>{{ sev }}</option>
+                {% endfor %}
+            </select>
+
+            <!-- Category Filter -->
+            <select name="category" class="form-control" style="font-size: 0.85rem; padding: 8px 12px;">
+                <option value="">All Categories</option>
+                {% for cat in categories %}
+                    <option value="{{ cat }}" {% if current_filters.category == cat %}selected{% endif %}>{{ cat }}</option>
+                {% endfor %}
+            </select>
+
+            <!-- Location Filter -->
+            <select name="location" class="form-control" style="font-size: 0.85rem; padding: 8px 12px;">
+                <option value="">All Locations</option>
+                {% for loc in locations %}
+                    <option value="{{ loc }}" {% if current_filters.location == loc %}selected{% endif %}>{{ loc }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+</div>
+
+<!-- Issues Registry Table -->
+<div class="card">
+    <div class="card-header">
+        <div class="card-title">
+            <span>📋</span>
+            <span>Recorded Issues ({{ issues|length }})</span>
+        </div>
+        <span style="font-size: 0.8rem; color: var(--text-dim);">Real-time database stream</span>
+    </div>
+
+    {% if issues and issues|length > 0 %}
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Category</th>
+                        <th>Location</th>
+                        <th>Reporter</th>
+                        <th>Priority</th>
+                        <th>SLA Status</th>
+                        <th>Recurrence</th>
+                        <th>Status</th>
+                        <th>Assigned Team</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for issue in issues %}
+                        <tr>
+                            <td style="font-weight: 700; color: var(--accent-cyan);">#{{ issue.issue_id }}</td>
+                            <td style="font-weight: 600;">{{ issue.issue_type }}</td>
+                            <td style="color: var(--text-muted); font-size: 0.85rem;">{{ issue.location }}</td>
+                            <td style="font-size: 0.85rem;">{{ issue.reporter_name or 'Campus User' }}</td>
+                            <td>
+                                <span class="badge badge-priority-{{ (issue.priority or 'medium').lower() }}">
+                                    {{ issue.priority or 'Medium' }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge" style="
+                                    {% if issue.sla.badge == 'danger' %}
+                                        background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);
+                                    {% elif issue.sla.badge == 'warning' %}
+                                        background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3);
+                                    {% elif issue.sla.badge == 'success' %}
+                                        background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);
+                                    {% else %}
+                                        background: rgba(6, 182, 212, 0.12); color: #38bdf8; border: 1px solid rgba(6, 182, 212, 0.3);
+                                    {% endif %}
+                                ">
+                                    {{ issue.sla.label }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge badge-risk-{{ (issue.recurrence_risk or 'low').lower() }}">
+                                    {{ issue.recurrence_risk or 'Low' }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge badge-{{ issue.status.lower().replace(' ', '-') }}">
+                                    {{ issue.status }}
+                                </span>
+                            </td>
+                            <td style="color: var(--text-dim); font-size: 0.82rem;">
+                                {{ issue.assigned_team_name or 'Unassigned' }}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('issues.view_issue', issue_id=issue.issue_id) }}" class="btn btn-outline btn-sm">
+                                    <span>Inspect</span>
+                                    <span>→</span>
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">🔍</div>
+            <h3>No Issues Matched Your Query</h3>
+            <p>Try modifying your search keywords or clearing filter parameters.</p>
+            <a href="{{ url_for('issues.list_issues') }}" class="btn btn-outline btn-sm">Clear All Filters</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

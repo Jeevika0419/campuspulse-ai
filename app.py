@@ -6,6 +6,7 @@ from routes.auth_routes import auth_bp
 from routes.student_routes import student_bp
 from routes.admin_routes import admin_bp
 from routes.maintenance_routes import maintenance_bp
+from routes.issue_routes import issue_bp
 from services.notification_service import get_unread_count
 
 app = Flask(__name__)
@@ -19,6 +20,7 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(student_bp)
 app.register_blueprint(admin_bp)
 app.register_blueprint(maintenance_bp)
+app.register_blueprint(issue_bp)
 
 # Global context processor to make auth status & notification count available in all templates
 @app.context_processor

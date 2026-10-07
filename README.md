@@ -15,7 +15,7 @@ CampusPulse AI is an enterprise-grade academic platform built with Flask, MySQL,
 | Sprint | Domain | Status | Key Deliverables |
 | :--- | :--- | :---: | :--- |
 | **Sprint 1** | **Authentication & Foundation UI** | **COMPLETED** | Hashed auth, Role RBAC (Student, Admin, Maintenance), 3 Dedicated Dashboards, Notification system foundation, Dark Theme UI, Pytest Suite |
-| **Sprint 2** | Issue Lifecycle & Attachments | Upcoming | Issue reporting form, Image upload, Status transitions, History audit logging |
+| **Sprint 2** | **Issue Lifecycle & Attachments** | **COMPLETED** | Issue reporting, Image upload service, Status progression, Admin team dispatch, Maintenance resolution proof, Audit history logging, Student reopen/ratings |
 | **Sprint 3** | Admin Command & SLA Engine | Upcoming | Dynamic SLA countdown timers, Hotspot clustering, Team dispatch, CSV reporting |
 | **Sprint 4** | Intelligent ML Recurrence Engine | Upcoming | Feature extraction, Scikit-learn Random Forest model, Recurrence risk explanation |
 | **Sprint 5** | Containerization & DevOps | Upcoming | Docker container, Jenkinsfile CI/CD pipeline, Automated testing |

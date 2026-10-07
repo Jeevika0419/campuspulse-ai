@@ -40,6 +40,14 @@
                     </a>
                 {% endif %}
 
+                <a href="{{ url_for('issues.list_issues') }}" class="nav-item {% if request.path == url_for('issues.list_issues') %}active{% endif %}">
+                    <span class="icon">📋</span> Issue Registry
+                </a>
+
+                <a href="{{ url_for('issues.report_issue') }}" class="nav-item {% if request.path == url_for('issues.report_issue') %}active{% endif %}">
+                    <span class="icon">➕</span> Report Issue
+                </a>
+
                 <div class="nav-category">System Overview</div>
                 <div class="nav-item" style="opacity: 0.7; cursor: default;">
                     <span class="icon">🌐</span> AWS Cloud Ready

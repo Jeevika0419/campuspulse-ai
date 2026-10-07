@@ -54,7 +54,7 @@
             <span>🛠️</span>
             <span>Assigned Maintenance Queue</span>
         </div>
-        <span style="font-size: 0.8rem; color: var(--text-muted);">Priority-ordered queue</span>
+        <a href="{{ url_for('issues.list_issues') }}" style="font-size: 0.8rem; color: var(--accent-cyan);">View All Work Orders →</a>
     </div>
 
     {% if assigned_issues and assigned_issues|length > 0 %}
@@ -101,9 +101,9 @@
                                 {{ issue.assigned_team_name }}
                             </td>
                             <td>
-                                <button class="btn btn-primary btn-sm" onclick="alert('Maintenance action workflow (Accept, Status Update, Proof Upload) will be active in Sprint 2!')">
+                                <a href="{{ url_for('issues.view_issue', issue_id=issue.issue_id) }}" class="btn btn-primary btn-sm">
                                     <span>Manage</span>
-                                </button>
+                                </a>
                             </td>
                         </tr>
                     {% endfor %}

@@ -84,7 +84,7 @@
                 <span>📋</span>
                 <span>Campus Issue Stream</span>
             </div>
-            <span style="font-size: 0.8rem; color: var(--text-muted);">Live database records</span>
+            <a href="{{ url_for('issues.list_issues') }}" style="font-size: 0.8rem; color: var(--accent-cyan);">View All Registry →</a>
         </div>
 
         {% if recent_issues and recent_issues|length > 0 %}
@@ -100,6 +100,7 @@
                             <th>Recurrence</th>
                             <th>Status</th>
                             <th>Assigned Team</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -126,6 +127,11 @@
                                 </td>
                                 <td style="color: var(--text-dim); font-size: 0.82rem;">
                                     {{ issue.assigned_team_name or 'Unassigned' }}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('issues.view_issue', issue_id=issue.issue_id) }}" class="btn btn-outline btn-sm">
+                                        <span>Dispatch</span>
+                                    </a>
                                 </td>
                             </tr>
                         {% endfor %}

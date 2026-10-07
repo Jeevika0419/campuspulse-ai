@@ -11,7 +11,7 @@
         <p>Report campus infrastructure problems, track real-time resolution progress, and verify fixes.</p>
     </div>
     <div>
-        <a href="#report-section" class="btn btn-primary" onclick="alert('Issue reporting module will be activated in Sprint 2! You can view current status and metrics below.')">
+        <a href="{{ url_for('issues.report_issue') }}" class="btn btn-primary">
             <span>+</span>
             <span>Report New Issue</span>
         </a>
@@ -62,7 +62,7 @@
                 <span>📝</span>
                 <span>My Submitted Issues</span>
             </div>
-            <span style="font-size: 0.8rem; color: var(--text-muted);">Real-time tracking</span>
+            <a href="{{ url_for('issues.list_issues', scope='my') }}" style="font-size: 0.8rem; color: var(--accent-cyan);">View All →</a>
         </div>
 
         {% if recent_issues and recent_issues|length > 0 %}
@@ -76,7 +76,7 @@
                             <th>Severity</th>
                             <th>Status</th>
                             <th>Assigned Team</th>
-                            <th>Date</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -98,8 +98,10 @@
                                 <td style="color: var(--text-dim); font-size: 0.85rem;">
                                     {{ issue.assigned_team_name or 'Pending Assignment' }}
                                 </td>
-                                <td style="color: var(--text-dim); font-size: 0.82rem;">
-                                    {{ issue.created_at.strftime('%b %d, %H:%M') if issue.created_at else 'Recent' }}
+                                <td>
+                                    <a href="{{ url_for('issues.view_issue', issue_id=issue.issue_id) }}" class="btn btn-outline btn-sm">
+                                        <span>View</span>
+                                    </a>
                                 </td>
                             </tr>
                         {% endfor %}
@@ -111,9 +113,9 @@
                 <div class="empty-icon">📂</div>
                 <h3>No Issues Reported Yet</h3>
                 <p>Have you noticed a faulty projector, air conditioner leak, or Wi-Fi connectivity issue? Submit your first report to trigger our AI dispatch.</p>
-                <button class="btn btn-outline btn-sm" onclick="alert('Full reporting form with image upload activates in Sprint 2!')">
-                    <span>How reporting works</span>
-                </button>
+                <a href="{{ url_for('issues.report_issue') }}" class="btn btn-primary btn-sm">
+                    <span>+ Report First Issue</span>
+                </a>
             </div>
         {% endif %}
     </div>

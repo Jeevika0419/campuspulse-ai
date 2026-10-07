@@ -1,0 +1,406 @@
+{% extends "base.html" %}
+
+{% block title %}Issue #{{ issue.issue_id }} Details{% endblock %}
+{% block page_heading %}Work Order #{{ issue.issue_id }}{% endblock %}
+
+{% block content %}
+<!-- Top Header Card -->
+<div class="card" style="margin-bottom: 24px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+        <div>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                <span style="font-size: 1.5rem; font-weight: 800; color: var(--accent-cyan);">#{{ issue.issue_id }}</span>
+                <h2 style="font-size: 1.4rem; margin: 0;">{{ issue.issue_type }}</h2>
+                <span class="badge badge-{{ issue.status.lower().replace(' ', '-') }}" style="font-size: 0.85rem;">
+                    {{ issue.status }}
+                </span>
+            </div>
+            <div style="font-size: 0.88rem; color: var(--text-muted); display: flex; gap: 16px; flex-wrap: wrap;">
+                <span>📍 <strong>Location:</strong> {{ issue.location }}</span>
+                <span>👤 <strong>Reporter:</strong> {{ issue.reporter_name or 'Campus User' }}</span>
+                <span>📅 <strong>Logged:</strong> {{ issue.created_at.strftime('%b %d, %Y at %H:%M') if issue.created_at else 'N/A' }}</span>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <span class="badge badge-priority-{{ (issue.priority or 'medium').lower() }}" style="font-size: 0.82rem; padding: 6px 12px;">
+                Priority: {{ issue.priority or 'Medium' }}
+            </span>
+            <span class="badge badge-risk-{{ (issue.recurrence_risk or 'low').lower() }}" style="font-size: 0.82rem; padding: 6px 12px;">
+                Recurrence Risk: {{ issue.recurrence_risk or 'Low' }}
+            </span>
+            <a href="{{ url_for('issues.list_issues') }}" class="btn btn-outline btn-sm">
+                ← Back to Registry
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Visual Lifecycle Progress Bar -->
+{% set stages = ['Reported', 'Under Review', 'Assigned', 'In Progress', 'Resolved', 'Closed'] %}
+{% set status_index = {'Reported': 0, 'Under Review': 1, 'Assigned': 2, 'In Progress': 3, 'Resolved': 4, 'Closed': 5, 'On Hold': 3, 'Reopened': 3} %}
+{% set current_idx = status_index.get(issue.status, 0) %}
+
+<div class="card" style="margin-bottom: 24px; padding: 20px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; position: relative;">
+        <!-- Connecting Line -->
+        <div style="position: absolute; top: 16px; left: 24px; right: 24px; height: 3px; background: rgba(255, 255, 255, 0.08); z-index: 1;"></div>
+        <div style="position: absolute; top: 16px; left: 24px; width: {{ (current_idx / 5.0) * 100 }}%; height: 3px; background: linear-gradient(90deg, var(--accent-cyan), var(--accent-indigo)); z-index: 2; transition: width 0.4s ease;"></div>
+
+        {% for stage in stages %}
+            {% set is_passed = loop.index0 <= current_idx %}
+            {% set is_active = stage == issue.status %}
+            <div style="display: flex; flex-direction: column; align-items: center; position: relative; z-index: 3;">
+                <div style="width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700;
+                    {% if is_passed %}
+                        background: linear-gradient(135deg, var(--accent-cyan), var(--accent-indigo)); color: #fff; box-shadow: 0 0 12px rgba(6, 182, 212, 0.4);
+                    {% else %}
+                        background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.1); color: var(--text-dim);
+                    {% endif %}
+                ">
+                    {% if is_passed %}✓{% else %}{{ loop.index }}{% endif %}
+                </div>
+                <span style="font-size: 0.75rem; margin-top: 6px; font-weight: 600; color: {% if is_passed %}#fff{% else %}var(--text-dim){% endif %};">
+                    {{ stage }}
+                </span>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Main Split: Details & History (Left) vs SLA & Role Action Forms (Right) -->
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
+    <!-- Left Column -->
+    <div style="display: flex; flex-direction: column; gap: 24px;">
+        <!-- Description Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <span>📄</span>
+                    <span>Problem Description</span>
+                </div>
+                <span class="badge badge-priority-{{ issue.severity.lower() }}">
+                    Reported Severity: {{ issue.severity }}
+                </span>
+            </div>
+            <p style="font-size: 0.95rem; line-height: 1.7; color: var(--text-main); white-space: pre-wrap;">
+                {{ issue.description }}
+            </p>
+        </div>
+
+        <!-- Evidence & Proof Media Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <span>📷</span>
+                    <span>Visual Evidence & Verification</span>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <!-- Reported Image -->
+                <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 14px; text-align: center;">
+                    <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 10px;">
+                        Initial Problem Photo
+                    </div>
+                    {% if issue.image_path %}
+                        <a href="{{ url_for('issues.uploaded_file', filename=issue.image_path) }}" target="_blank">
+                            <img src="{{ url_for('issues.uploaded_file', filename=issue.image_path) }}" alt="Issue Evidence" style="max-height: 180px; max-width: 100%; border-radius: var(--radius-sm); object-fit: cover; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+                        </a>
+                        <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 6px;">Click to view full size</div>
+                    {% else %}
+                        <div style="padding: 40px 0; color: var(--text-dim); font-size: 0.85rem;">
+                            No initial photo attached
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Resolution Proof Image -->
+                <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 14px; text-align: center;">
+                    <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 10px;">
+                        Maintenance Resolution Proof
+                    </div>
+                    {% if issue.resolution_image %}
+                        <a href="{{ url_for('issues.uploaded_file', filename=issue.resolution_image) }}" target="_blank">
+                            <img src="{{ url_for('issues.uploaded_file', filename=issue.resolution_image) }}" alt="Resolution Proof" style="max-height: 180px; max-width: 100%; border-radius: var(--radius-sm); object-fit: cover; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+                        </a>
+                        <div style="font-size: 0.72rem; color: #34d399; margin-top: 6px;">Verified by Maintenance</div>
+                    {% else %}
+                        <div style="padding: 40px 0; color: var(--text-dim); font-size: 0.85rem;">
+                            Awaiting resolution proof upload
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Audit History Timeline Log -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <span>📜</span>
+                    <span>Audit Trail & Status Log</span>
+                </div>
+                <span style="font-size: 0.75rem; color: var(--text-dim);">Immutable activity history</span>
+            </div>
+
+            {% if history and history|length > 0 %}
+                <div class="table-responsive">
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>Actor</th>
+                                <th>Transition</th>
+                                <th>Remarks / Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in history %}
+                                <tr>
+                                    <td style="font-size: 0.8rem; color: var(--text-dim);">
+                                        {{ log.changed_at.strftime('%b %d, %H:%M') if log.changed_at else 'Recent' }}
+                                    </td>
+                                    <td>
+                                        <div style="font-weight: 600; font-size: 0.85rem;">{{ log.changer_name or 'System' }}</div>
+                                        <span class="user-role-tag {{ log.changer_role or 'admin' }}" style="font-size: 0.65rem;">
+                                            {{ log.changer_role or 'system' }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span style="font-size: 0.82rem; color: var(--text-muted);">
+                                            {{ log.old_status or 'Start' }} →
+                                        </span>
+                                        <span class="badge badge-{{ log.new_status.lower().replace(' ', '-') }}" style="font-size: 0.72rem;">
+                                            {{ log.new_status }}
+                                        </span>
+                                    </td>
+                                    <td style="font-size: 0.85rem; color: var(--text-main);">
+                                        {{ log.remarks or 'No remarks recorded.' }}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div style="text-align: center; padding: 20px; color: var(--text-dim);">
+                    No audit records found.
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Student Feedback Section (if resolved/rated) -->
+        {% if issue.feedback_rating %}
+            <div class="card" style="border-color: rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.05);">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span>⭐</span>
+                        <span>Student Resolution Rating</span>
+                    </div>
+                    <span style="font-size: 1.1rem; color: #fbbf24; font-weight: 800;">
+                        {% for _ in range(issue.feedback_rating) %}★{% endfor %}
+                        ({{ issue.feedback_rating }}/5)
+                    </span>
+                </div>
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin: 0;">
+                    "{{ issue.feedback_comment or 'No additional comment provided.' }}"
+                </p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Right Column: SLA & Action Panels -->
+    <div style="display: flex; flex-direction: column; gap: 24px;">
+        <!-- SLA & Operations Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <span>⏱️</span>
+                    <span>SLA Resolution Target</span>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+                <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-dim); font-weight: 700; margin-bottom: 4px;">
+                    Current Status
+                </div>
+                <span class="badge" style="font-size: 0.9rem; padding: 6px 14px;
+                    {% if sla_info.badge == 'danger' %}
+                        background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4);
+                    {% elif sla_info.badge == 'warning' %}
+                        background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4);
+                    {% elif sla_info.badge == 'success' %}
+                        background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4);
+                    {% else %}
+                        background: rgba(6, 182, 212, 0.15); color: #38bdf8; border: 1px solid rgba(6, 182, 212, 0.4);
+                    {% endif %}
+                ">
+                    {{ sla_info.label }}
+                </span>
+            </div>
+
+            <div style="font-size: 0.84rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 8px;">
+                <div>
+                    <strong>SLA Deadline:</strong> 
+                    {{ issue.sla_deadline.strftime('%b %d, %H:%M') if issue.sla_deadline else 'Standard' }}
+                </div>
+                <div>
+                    <strong>Assigned Team:</strong> 
+                    <span style="color: #38bdf8; font-weight: 600;">
+                        {{ issue.assigned_team_name or 'Pending Assignment' }}
+                    </span>
+                </div>
+                {% if issue.assigned_team_description %}
+                    <div style="font-size: 0.78rem; color: var(--text-dim);">
+                        {{ issue.assigned_team_description }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 1. ADMIN ACTION PANEL -->
+        {% if current_user_role == 'admin' %}
+            <div class="card" style="border-color: rgba(99, 102, 241, 0.35);">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span>👑</span>
+                        <span>Admin Dispatch Panel</span>
+                    </div>
+                </div>
+
+                <form method="POST" action="{{ url_for('issues.assign_issue', issue_id=issue.issue_id) }}">
+                    <div class="form-group">
+                        <label class="form-label">Assign Maintenance Team</label>
+                        <select name="team_id" class="form-control" required>
+                            <option value="" disabled selected>Select specialized team...</option>
+                            {% for t in teams %}
+                                <option value="{{ t.team_id }}" {% if issue.assigned_team == t.team_id %}selected{% endif %}>
+                                    {{ t.team_name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Override Priority</label>
+                        <select name="priority" class="form-control">
+                            {% for p in ['Low', 'Medium', 'High', 'Critical'] %}
+                                <option value="{{ p }}" {% if issue.priority == p %}selected{% endif %}>{{ p }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Dispatch Remarks</label>
+                        <textarea name="remarks" class="form-control" rows="2" placeholder="e.g. Dispatched for immediate emergency inspection"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-purple" style="width: 100%;">
+                        <span>Update Team & Priority</span>
+                    </button>
+                </form>
+            </div>
+        {% endif %}
+
+        <!-- 2. MAINTENANCE STAFF ACTION PANEL -->
+        {% if current_user_role in ('maintenance', 'admin') %}
+            <div class="card" style="border-color: rgba(245, 158, 11, 0.35);">
+                <div class="card-header">
+                    <div class="card-title">
+                        <span>🛠️</span>
+                        <span>Field Ops Status Update</span>
+                    </div>
+                </div>
+
+                <form method="POST" action="{{ url_for('issues.update_status', issue_id=issue.issue_id) }}" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label class="form-label">Set New Status</label>
+                        <select name="status" class="form-control" required>
+                            {% for st in ['Under Review', 'In Progress', 'On Hold', 'Resolved', 'Closed'] %}
+                                <option value="{{ st }}" {% if issue.status == st %}selected{% endif %}>{{ st }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Work Log Remarks</label>
+                        <textarea name="remarks" class="form-control" rows="2" placeholder="Describe actions taken (e.g. Replaced burnt HDMI transmitter, tested feed successfully)." required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Attach Resolution Photo</label>
+                        <input type="file" name="resolution_image" accept="image/*" class="form-control" style="font-size: 0.8rem;">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        <span>Commit Status Transition</span>
+                    </button>
+                </form>
+            </div>
+        {% endif %}
+
+        <!-- 3. STUDENT FEEDBACK & REOPEN PANEL -->
+        {% if issue.reported_by == current_user_id or current_user_role == 'admin' %}
+            {% if issue.status in ('Resolved', 'Closed') %}
+                <!-- Resolution Feedback Rating Card -->
+                {% if not issue.feedback_rating %}
+                    <div class="card" style="border-color: rgba(16, 185, 129, 0.35);">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <span>⭐</span>
+                                <span>Rate Resolution Quality</span>
+                            </div>
+                        </div>
+
+                        <form method="POST" action="{{ url_for('issues.submit_feedback', issue_id=issue.issue_id) }}">
+                            <div class="form-group">
+                                <label class="form-label">Satisfaction Score (1-5)</label>
+                                <select name="rating" class="form-control" required>
+                                    <option value="5" selected>5 ★ — Excellent (Fully Resolved)</option>
+                                    <option value="4">4 ★ — Good</option>
+                                    <option value="3">3 ★ — Average</option>
+                                    <option value="2">2 ★ — Below Average</option>
+                                    <option value="1">1 ★ — Unsatisfactory</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Feedback Comments</label>
+                                <textarea name="comment" class="form-control" rows="2" placeholder="Was the technician on time? Is the hardware functioning smoothly?"></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary" style="width: 100%; background: linear-gradient(135deg, #10b981, #06b6d4);">
+                                <span>Submit Rating</span>
+                            </button>
+                        </form>
+                    </div>
+                {% endif %}
+
+                <!-- Reopen Issue Option -->
+                <div class="card" style="border-color: rgba(239, 68, 68, 0.3);">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span>🔄</span>
+                            <span>Issue Still Persisting?</span>
+                        </div>
+                    </div>
+                    <p style="font-size: 0.84rem; color: var(--text-muted); margin-bottom: 12px;">
+                        If the infrastructure failure re-occurred or the repair was incomplete, you can reopen this work order.
+                    </p>
+
+                    <form method="POST" action="{{ url_for('issues.reopen_issue', issue_id=issue.issue_id) }}">
+                        <div class="form-group">
+                            <label class="form-label">Reopen Reason *</label>
+                            <textarea name="remarks" class="form-control" rows="2" placeholder="e.g. Projector worked for 10 minutes then shut off again." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-danger btn-sm" style="width: 100%;">
+                            <span>Reopen Work Order</span>
+                        </button>
+                    </form>
+                </div>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
