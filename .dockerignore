@@ -1,0 +1,15 @@
+venv/
+env/
+.env
+__pycache__/
+*.py[cod]
+.git/
+.gitignore
+.pytest_cache/
+tests/
+*.md
+Jenkinsfile
+docker-compose.yml
+.dockerignore
+.env.example
+uploads/

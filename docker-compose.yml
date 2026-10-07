@@ -1,0 +1,76 @@
+version: "3.9"
+
+# CampusPulse AI — Docker Compose for Local Development & Testing
+# ================================================================
+# Usage:
+#   docker-compose up --build          (start full stack)
+#   docker-compose up --build -d       (detached mode)
+#   docker-compose down -v             (stop & remove volumes)
+
+services:
+  # ------- MySQL Database Service -------
+  db:
+    image: mysql:8.0
+    container_name: campuspulse_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD:-CampusPulse@2024}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-campus_issue_system}
+      MYSQL_USER: ${MYSQL_USER:-campuspulse}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-CampusPulse@2024}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    ports:
+      - "3307:3306"  # Mapped to 3307 to avoid conflicts with local MySQL
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_PASSWORD:-CampusPulse@2024}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+    networks:
+      - campuspulse_net
+
+  # ------- Flask Application Service -------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: campuspulse_app
+    restart: unless-stopped
+    environment:
+      MYSQL_HOST: db
+      MYSQL_PORT: "3306"
+      MYSQL_USER: ${MYSQL_USER:-campuspulse}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-CampusPulse@2024}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-campus_issue_system}
+      SECRET_KEY: ${SECRET_KEY:-campuspulse-docker-dev-secret}
+      FLASK_ENV: development
+      FLASK_DEBUG: "1"
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./uploads:/app/uploads  # Persist uploads across container restarts
+      - .:/app  # Hot-reload for development (remove in production)
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - campuspulse_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/test-db"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+# ------- Named Volumes -------
+volumes:
+  mysql_data:
+    driver: local
+
+# ------- Networks -------
+networks:
+  campuspulse_net:
+    driver: bridge

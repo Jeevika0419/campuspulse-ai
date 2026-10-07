@@ -1,12 +1,13 @@
 import os
 from datetime import datetime
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash, send_from_directory, abort
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, send_from_directory, abort, jsonify
 from routes.auth_routes import login_required, role_required
 from database.db import get_db_connection
 from services.priority_service import calculate_initial_priority
 from services.sla_service import calculate_sla_deadline, get_sla_status
 from services.upload_service import save_uploaded_file
 from services.notification_service import create_notification
+from services.ml_service import predict_recurrence_risk, update_issue_recurrence_risk
 import config
 
 issue_bp = Blueprint("issues", __name__)
@@ -423,6 +424,13 @@ def update_status(issue_id):
 
         conn.commit()
 
+        # Auto-run ML recurrence engine when resolved/closed (Sprint 4)
+        if new_status in ("Resolved", "Closed"):
+            try:
+                risk_level = update_issue_recurrence_risk(issue_id)
+            except Exception:
+                risk_level = "N/A"
+
         # Notify reporter
         create_notification(
             user_id=issue["reported_by"],
@@ -546,6 +554,35 @@ def submit_feedback(issue_id):
         conn.close()
 
     return redirect(url_for("issues.view_issue", issue_id=issue_id))
+
+
+@issue_bp.route("/api/issues/predict-recurrence", methods=["POST"])
+@login_required
+def api_predict_recurrence():
+    """
+    Sprint 4 — AI Recurrence Prediction Endpoint
+    Accepts: { issue_type, location, severity, issue_id? }
+    Returns: { risk_level, confidence_score, feature_explanations, summary }
+    """
+    data = request.get_json(silent=True) or {}
+    issue_type = data.get("issue_type") or request.form.get("issue_type", "")
+    location = data.get("location") or request.form.get("location", "")
+    severity = data.get("severity") or request.form.get("severity", "Medium")
+    issue_id = data.get("issue_id") or request.form.get("issue_id")
+
+    if not issue_type or not location:
+        return jsonify({"error": "issue_type and location are required"}), 400
+
+    try:
+        prediction = predict_recurrence_risk(
+            issue_type=issue_type,
+            location=location,
+            severity=severity,
+            issue_id=int(issue_id) if issue_id else None
+        )
+        return jsonify(prediction)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @issue_bp.route("/uploads/<filename>")

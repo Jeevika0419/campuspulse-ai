@@ -32,7 +32,13 @@
                     </a>
                 {% elif current_user_role == 'admin' %}
                     <a href="{{ url_for('admin.dashboard') }}" class="nav-item {% if request.path == url_for('admin.dashboard') %}active{% endif %}">
-                        <span class="icon">⚡</span> Admin Center
+                        <span class="icon">⚡</span> Admin Analytics
+                    </a>
+                    <a href="{{ url_for('admin.sla_monitoring') }}" class="nav-item {% if request.path == url_for('admin.sla_monitoring') %}active{% endif %}">
+                        <span class="icon">⏱️</span> SLA Monitor
+                    </a>
+                    <a href="{{ url_for('admin.manage_teams') }}" class="nav-item {% if request.path == url_for('admin.manage_teams') %}active{% endif %}">
+                        <span class="icon">🛠️</span> Teams Management
                     </a>
                 {% elif current_user_role == 'maintenance' %}
                     <a href="{{ url_for('maintenance.dashboard') }}" class="nav-item {% if request.path == url_for('maintenance.dashboard') %}active{% endif %}">

@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}Real-Time SLA Monitoring{% endblock %}
+{% block page_heading %}SLA & Resolution Escalation Monitor{% endblock %}
+
+{% block content %}
+<!-- SLA Header Stats -->
+<div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); margin-bottom: 24px;">
+    <div class="stat-card">
+        <div class="stat-info">
+            <div class="stat-label">Total Tracked Work Orders</div>
+            <div class="stat-value">{{ total_tracked }}</div>
+        </div>
+        <div class="stat-icon icon-cyan">⏱️</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-info">
+            <div class="stat-label">SLA Breaches (Overdue)</div>
+            <div class="stat-value" style="color: {% if breached_issues|length > 0 %}#f87171{% else %}#34d399{% endif %};">
+                {{ breached_issues|length }}
+            </div>
+        </div>
+        <div class="stat-icon icon-rose">🚨</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-info">
+            <div class="stat-label">Approaching Breach (&lt; 2h)</div>
+            <div class="stat-value" style="color: #fbbf24;">{{ approaching_issues|length }}</div>
+        </div>
+        <div class="stat-icon icon-amber">⏳</div>
+    </div>
+</div>
+
+<!-- Breached Incidents Alert Banner (if any) -->
+{% if breached_issues and breached_issues|length > 0 %}
+    <div class="card" style="border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.05); margin-bottom: 24px;">
+        <div class="card-header">
+            <div class="card-title" style="color: #f87171;">
+                <span>⚠️</span>
+                <span>Immediate Attention: {{ breached_issues|length }} SLA Breaches Detected</span>
+            </div>
+            <span class="badge" style="background: #ef4444; color: #fff;">Escalation Required</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Category</th>
+                        <th>Location</th>
+                        <th>Priority</th>
+                        <th>Deadline</th>
+                        <th>Breach Elapsed</th>
+                        <th>Assigned Team</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for issue in breached_issues %}
+                        <tr>
+                            <td style="font-weight: 700; color: #f87171;">#{{ issue.issue_id }}</td>
+                            <td style="font-weight: 600;">{{ issue.issue_type }}</td>
+                            <td style="color: var(--text-muted); font-size: 0.85rem;">{{ issue.location }}</td>
+                            <td>
+                                <span class="badge badge-priority-{{ (issue.priority or 'medium').lower() }}">
+                                    {{ issue.priority or 'Medium' }}
+                                </span>
+                            </td>
+                            <td style="font-size: 0.82rem; color: var(--text-dim);">
+                                {{ issue.sla_deadline.strftime('%b %d, %H:%M') if issue.sla_deadline else 'N/A' }}
+                            </td>
+                            <td>
+                                <span class="badge" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4);">
+                                    {{ issue.sla.label }}
+                                </span>
+                            </td>
+                            <td style="color: var(--text-dim); font-size: 0.82rem;">
+                                {{ issue.assigned_team_name or 'Unassigned' }}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('issues.view_issue', issue_id=issue.issue_id) }}" class="btn btn-outline btn-sm" style="border-color: #ef4444; color: #f87171;">
+                                    <span>Escalate</span>
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Full SLA Registry Table -->
+<div class="card">
+    <div class="card-header">
+        <div class="card-title">
+            <span>📋</span>
+            <span>All SLA-Monitored Infrastructure Issues</span>
+        </div>
+        <span style="font-size: 0.8rem; color: var(--text-dim);">Dynamic Chronological Countdown</span>
+    </div>
+
+    {% if issues and issues|length > 0 %}
+        <div class="table-responsive">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Category</th>
+                        <th>Location</th>
+                        <th>Priority</th>
+                        <th>Target Deadline</th>
+                        <th>Live SLA Status</th>
+                        <th>Current Status</th>
+                        <th>Assigned Team</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for issue in issues %}
+                        <tr>
+                            <td style="font-weight: 700; color: var(--accent-cyan);">#{{ issue.issue_id }}</td>
+                            <td style="font-weight: 600;">{{ issue.issue_type }}</td>
+                            <td style="color: var(--text-muted); font-size: 0.85rem;">{{ issue.location }}</td>
+                            <td>
+                                <span class="badge badge-priority-{{ (issue.priority or 'medium').lower() }}">
+                                    {{ issue.priority or 'Medium' }}
+                                </span>
+                            </td>
+                            <td style="font-size: 0.82rem; color: var(--text-dim);">
+                                {{ issue.sla_deadline.strftime('%b %d, %H:%M') if issue.sla_deadline else 'Standard' }}
+                            </td>
+                            <td>
+                                <span class="badge" style="
+                                    {% if issue.sla.badge == 'danger' %}
+                                        background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);
+                                    {% elif issue.sla.badge == 'warning' %}
+                                        background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3);
+                                    {% elif issue.sla.badge == 'success' %}
+                                        background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);
+                                    {% else %}
+                                        background: rgba(6, 182, 212, 0.12); color: #38bdf8; border: 1px solid rgba(6, 182, 212, 0.3);
+                                    {% endif %}
+                                ">
+                                    {{ issue.sla.label }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge badge-{{ issue.status.lower().replace(' ', '-') }}">
+                                    {{ issue.status }}
+                                </span>
+                            </td>
+                            <td style="color: var(--text-dim); font-size: 0.82rem;">
+                                {{ issue.assigned_team_name or 'Unassigned' }}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('issues.view_issue', issue_id=issue.issue_id) }}" class="btn btn-outline btn-sm">
+                                    <span>Inspect</span>
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">⏱️</div>
+            <h3>No Tracked SLAs</h3>
+            <p>Issues reported with target resolution windows will appear here.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

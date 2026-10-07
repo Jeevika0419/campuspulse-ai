@@ -3,8 +3,47 @@
 {% block title %}Admin Command Center{% endblock %}
 {% block page_heading %}Executive Infrastructure Analytics{% endblock %}
 
+{% block extra_head %}
+<!-- Chart.js CDN for interactive visualizations -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{% endblock %}
+
 {% block content %}
-<!-- Executive Stats Grid -->
+<!-- Quick Action Bar -->
+<div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 24px;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+        <span class="badge badge-risk-low" style="padding: 6px 14px; font-size: 0.8rem;">
+            ● Telemetry: Online & Synchronized
+        </span>
+        <span style="font-size: 0.82rem; color: var(--text-muted);">
+            Avg Satisfaction: <strong style="color: #fbbf24;">{{ stats.avg_satisfaction_rating or '4.8' }} ★</strong>
+        </span>
+    </div>
+
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <a href="{{ url_for('admin.export_csv') }}" class="btn btn-outline btn-sm">
+            <span>📥 Export CSV Audit</span>
+        </a>
+        <a href="{{ url_for('admin.sla_monitoring') }}" class="btn btn-outline btn-sm" style="border-color: rgba(245, 158, 11, 0.4); color: #fbbf24;">
+            <span>⏱️ SLA Monitor</span>
+            {% if stats.sla_breaches > 0 %}
+                <span class="badge" style="background: #ef4444; color: #fff; padding: 2px 6px; font-size: 0.65rem;">
+                    {{ stats.sla_breaches }}
+                </span>
+            {% endif %}
+        </a>
+        <a href="{{ url_for('admin.manage_teams') }}" class="btn btn-outline btn-sm">
+            <span>🛠️ Maintenance Teams</span>
+        </a>
+        <form method="POST" action="{{ url_for('admin.seed_data_route') }}" style="display: inline;">
+            <button type="submit" class="btn btn-primary btn-sm" style="background: linear-gradient(135deg, #06b6d4, #6366f1);">
+                <span>⚡ Seed Demo Dataset</span>
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Executive Stats Grid (Cards) -->
 <div class="stats-grid">
     <div class="stat-card">
         <div class="stat-info">
@@ -16,7 +55,7 @@
 
     <div class="stat-card">
         <div class="stat-info">
-            <div class="stat-label">Active / In-Flight</div>
+            <div class="stat-label">Active Workload</div>
             <div class="stat-value">{{ stats.open_issues }}</div>
         </div>
         <div class="stat-icon icon-amber">⏳</div>
@@ -32,7 +71,7 @@
 
     <div class="stat-card">
         <div class="stat-info">
-            <div class="stat-label">Successfully Resolved</div>
+            <div class="stat-label">Resolved Issues</div>
             <div class="stat-value" style="color: #34d399;">{{ stats.resolved_issues }}</div>
         </div>
         <div class="stat-icon icon-emerald">✅</div>
@@ -40,51 +79,135 @@
 
     <div class="stat-card">
         <div class="stat-info">
-            <div class="stat-label">High Recurrence Risk</div>
-            <div class="stat-value" style="color: #fbbf24;">{{ stats.recurring_issues }}</div>
+            <div class="stat-label">SLA Breaches</div>
+            <div class="stat-value" style="color: {% if stats.sla_breaches > 0 %}#f87171{% else %}#34d399{% endif %};">
+                {{ stats.sla_breaches }}
+            </div>
         </div>
-        <div class="stat-icon icon-purple">🤖</div>
+        <div class="stat-icon icon-rose">⚠️</div>
     </div>
 
     <div class="stat-card">
         <div class="stat-info">
-            <div class="stat-label">Avg Resolution Time</div>
+            <div class="stat-label">Avg Resolution</div>
             <div class="stat-value">{{ stats.avg_resolution_hours }}<span style="font-size: 1.1rem; color: var(--text-muted);">h</span></div>
         </div>
         <div class="stat-icon icon-blue">⏱️</div>
     </div>
 </div>
 
-<!-- AI Predictive Insight Highlight Banner -->
-<div class="card" style="margin-bottom: 24px; background: linear-gradient(135deg, rgba(20, 27, 49, 0.95), rgba(35, 25, 60, 0.9)); border-color: rgba(139, 92, 246, 0.35);">
-    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
-        <div style="display: flex; align-items: center; gap: 16px;">
-            <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(139, 92, 246, 0.2); border: 1px solid rgba(139, 92, 246, 0.4); display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
-                🧠
-            </div>
-            <div>
-                <h4 style="font-size: 1.05rem; margin-bottom: 3px;">CampusPulse AI Engine Ready</h4>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">
-                    Predictive maintenance engine tracks issue type frequency, location clustering, and recurrence probability.
-                </p>
-            </div>
+<!-- Stylized Campus Hotspots Visualizer Section -->
+<div class="card" style="margin-bottom: 24px; padding: 24px;">
+    <div class="card-header">
+        <div class="card-title">
+            <span>📍</span>
+            <span>Campus Infrastructure Problem Hotspots</span>
         </div>
-        <span class="badge badge-risk-low" style="padding: 6px 14px; font-size: 0.82rem;">
-            ● Model Status: Standby / Training Data Ready
-        </span>
+        <span style="font-size: 0.8rem; color: var(--text-dim);">Stylized Campus Clustering Engine</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
+        {% for h in hotspot_clusters %}
+            {% set is_hot = h.issue_count >= 4 %}
+            <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid {% if is_hot %}rgba(239, 68, 68, 0.35){% else %}var(--border-subtle){% endif %}; border-radius: var(--radius-md); padding: 16px; position: relative; overflow: hidden; transition: var(--transition);">
+                {% if is_hot %}
+                    <div style="position: absolute; top: 12px; right: 12px; display: flex; align-items: center; gap: 6px;">
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 10px #ef4444; animation: pulse 1.5s infinite;"></span>
+                        <span style="font-size: 0.7rem; font-weight: 700; color: #f87171; text-transform: uppercase;">Hotspot</span>
+                    </div>
+                {% endif %}
+
+                <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 6px; color: #fff;">
+                    {{ h.location }}
+                </div>
+
+                <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px;">
+                    <span style="font-size: 1.8rem; font-weight: 800; font-family: var(--font-heading); color: {% if is_hot %}#f87171{% else %}#38bdf8{% endif %};">
+                        {{ h.issue_count }}
+                    </span>
+                    <span style="font-size: 0.78rem; color: var(--text-muted);">Recorded Reports</span>
+                </div>
+
+                <!-- Mini Bar Breakdown -->
+                <div style="display: flex; gap: 10px; font-size: 0.75rem; color: var(--text-dim);">
+                    <span>🚨 Critical: <strong style="color: #f87171;">{{ h.critical_count }}</strong></span>
+                    <span>✅ Fixed: <strong style="color: #34d399;">{{ h.resolved_count }}</strong></span>
+                    <span>🔄 Recurring: <strong style="color: #fbbf24;">{{ h.recurring_count }}</strong></span>
+                </div>
+            </div>
+        {% endfor %}
     </div>
 </div>
 
-<!-- Main Split: Recent Issues vs Analytics Sidebars -->
+<!-- Charts Grid (2x2 Grid) -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+    <!-- 1. Category Distribution Doughnut Chart -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">
+                <span>🍩</span>
+                <span>Issues by Category</span>
+            </div>
+            <span style="font-size: 0.75rem; color: var(--text-dim);">Hardware Distribution</span>
+        </div>
+        <div style="position: relative; height: 260px; display: flex; align-items: center; justify-content: center;">
+            <canvas id="categoryChart"></canvas>
+        </div>
+    </div>
+
+    <!-- 2. Status Breakdown Bar Chart -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">
+                <span>📊</span>
+                <span>Lifecycle Status Breakdown</span>
+            </div>
+            <span style="font-size: 0.75rem; color: var(--text-dim);">Work Order State</span>
+        </div>
+        <div style="position: relative; height: 260px; display: flex; align-items: center; justify-content: center;">
+            <canvas id="statusChart"></canvas>
+        </div>
+    </div>
+
+    <!-- 3. Severity Distribution Doughnut Chart -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">
+                <span>⚠️</span>
+                <span>Severity Distribution</span>
+            </div>
+            <span style="font-size: 0.75rem; color: var(--text-dim);">Triage Level</span>
+        </div>
+        <div style="position: relative; height: 260px; display: flex; align-items: center; justify-content: center;">
+            <canvas id="severityChart"></canvas>
+        </div>
+    </div>
+
+    <!-- 4. Monthly Issue Trend Line Chart -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">
+                <span>📈</span>
+                <span>Resolution Trend (Reported vs Fixed)</span>
+            </div>
+            <span style="font-size: 0.75rem; color: var(--text-dim);">Temporal Throughput</span>
+        </div>
+        <div style="position: relative; height: 260px; display: flex; align-items: center; justify-content: center;">
+            <canvas id="trendChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Main Split: Live Issue Stream & Teams Workload -->
 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
-    <!-- Recent Issues Table -->
+    <!-- Issue Stream Table -->
     <div class="card">
         <div class="card-header">
             <div class="card-title">
                 <span>📋</span>
-                <span>Campus Issue Stream</span>
+                <span>Live Campus Issue Stream</span>
             </div>
-            <a href="{{ url_for('issues.list_issues') }}" style="font-size: 0.8rem; color: var(--accent-cyan);">View All Registry →</a>
+            <a href="{{ url_for('issues.list_issues') }}" style="font-size: 0.8rem; color: var(--accent-cyan);">View Full Registry →</a>
         </div>
 
         {% if recent_issues and recent_issues|length > 0 %}
@@ -95,11 +218,9 @@
                             <th>ID</th>
                             <th>Category</th>
                             <th>Location</th>
-                            <th>Reporter</th>
                             <th>Priority</th>
-                            <th>Recurrence</th>
+                            <th>SLA</th>
                             <th>Status</th>
-                            <th>Assigned Team</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -109,24 +230,30 @@
                                 <td style="font-weight: 700; color: var(--accent-cyan);">#{{ issue.issue_id }}</td>
                                 <td style="font-weight: 600;">{{ issue.issue_type }}</td>
                                 <td style="color: var(--text-muted); font-size: 0.85rem;">{{ issue.location }}</td>
-                                <td style="font-size: 0.85rem;">{{ issue.reporter_name or 'Anonymous' }}</td>
                                 <td>
                                     <span class="badge badge-priority-{{ (issue.priority or 'medium').lower() }}">
                                         {{ issue.priority or 'Medium' }}
                                     </span>
                                 </td>
                                 <td>
-                                    <span class="badge badge-risk-{{ (issue.recurrence_risk or 'low').lower() }}">
-                                        {{ issue.recurrence_risk or 'Low' }}
+                                    <span class="badge" style="
+                                        {% if issue.sla.badge == 'danger' %}
+                                            background: rgba(239, 68, 68, 0.15); color: #f87171;
+                                        {% elif issue.sla.badge == 'warning' %}
+                                            background: rgba(245, 158, 11, 0.15); color: #fbbf24;
+                                        {% elif issue.sla.badge == 'success' %}
+                                            background: rgba(16, 185, 129, 0.15); color: #34d399;
+                                        {% else %}
+                                            background: rgba(6, 182, 212, 0.12); color: #38bdf8;
+                                        {% endif %}
+                                    ">
+                                        {{ issue.sla.label }}
                                     </span>
                                 </td>
                                 <td>
                                     <span class="badge badge-{{ issue.status.lower().replace(' ', '-') }}">
                                         {{ issue.status }}
                                     </span>
-                                </td>
-                                <td style="color: var(--text-dim); font-size: 0.82rem;">
-                                    {{ issue.assigned_team_name or 'Unassigned' }}
                                 </td>
                                 <td>
                                     <a href="{{ url_for('issues.view_issue', issue_id=issue.issue_id) }}" class="btn btn-outline btn-sm">
@@ -142,70 +269,168 @@
             <div class="empty-state">
                 <div class="empty-icon">📂</div>
                 <h3>No Issues Currently Logged</h3>
-                <p>The campus database is currently clean. As students and staff log infrastructure issues, they will stream here in real-time with automated AI recurrence risk scoring.</p>
+                <p>Click "Seed Demo Dataset" to populate realistic campus records for demonstration.</p>
             </div>
         {% endif %}
     </div>
 
-    <!-- Right Side: Hotspots & Teams -->
-    <div style="display: flex; flex-direction: column; gap: 24px;">
-        <!-- Hotspots Card -->
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">
-                    <span>📍</span>
-                    <span>Campus Hotspots</span>
-                </div>
-                <span style="font-size: 0.75rem; color: var(--text-dim);">By Issue Density</span>
+    <!-- Maintenance Teams Workload Card -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">
+                <span>🛠️</span>
+                <span>Team Throughput</span>
             </div>
-
-            {% if hotspot_locations and hotspot_locations|length > 0 %}
-                <div class="hotspot-list">
-                    {% for h in hotspot_locations %}
-                        <div class="hotspot-item">
-                            <span class="hotspot-name">{{ h.location }}</span>
-                            <div class="hotspot-bar-container">
-                                <div class="hotspot-bar" style="width: {{ [h.issue_count * 15, 100]|min }}%;"></div>
-                            </div>
-                            <span style="font-size: 0.82rem; font-weight: 700; color: #38bdf8;">
-                                {{ h.issue_count }}
-                            </span>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div style="text-align: center; padding: 20px 0; color: var(--text-dim); font-size: 0.85rem;">
-                    No location hotspot clusters yet.
-                </div>
-            {% endif %}
+            <a href="{{ url_for('admin.manage_teams') }}" style="font-size: 0.8rem; color: var(--accent-cyan);">Manage →</a>
         </div>
 
-        <!-- Maintenance Teams Workload -->
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">
-                    <span>🛠️</span>
-                    <span>Maintenance Teams</span>
-                </div>
-                <span style="font-size: 0.75rem; color: var(--text-dim);">Active Tasks</span>
-            </div>
-
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-                {% for team in teams %}
-                    <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: var(--radius-sm); background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle);">
-                        <div>
-                            <div style="font-weight: 600; font-size: 0.86rem;">{{ team.team_name }}</div>
-                            <div style="font-size: 0.72rem; color: var(--text-dim); max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                {{ team.team_description }}
-                            </div>
-                        </div>
-                        <span class="badge" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa;">
-                            {{ team.active_tasks }} Active
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            {% for t in teams %}
+                <div style="padding: 12px; border-radius: var(--radius-sm); background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <span style="font-weight: 600; font-size: 0.88rem;">{{ t.team_name }}</span>
+                        <span class="badge" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; font-size: 0.72rem;">
+                            {{ t.active_workload }} Active
                         </span>
                     </div>
-                {% endfor %}
-            </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.76rem; color: var(--text-dim);">
+                        <span>Completed: {{ t.completed_tasks }}/{{ t.total_assigned }} ({{ t.completion_rate }}%)</span>
+                        <span>Avg: {{ t.avg_turnaround_hours }}h</span>
+                    </div>
+                </div>
+            {% endfor %}
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const chartData = {{ chart_data|tojson }};
+    const defaultColors = ['#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#64748b', '#0ea5e9'];
+
+    // 1. Category Chart
+    const catCtx = document.getElementById('categoryChart');
+    if (catCtx && chartData.categories.labels.length > 0) {
+        new Chart(catCtx, {
+            type: 'doughnut',
+            data: {
+                labels: chartData.categories.labels,
+                datasets: [{
+                    data: chartData.categories.data,
+                    backgroundColor: defaultColors,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'right', labels: { color: '#94a3b8', boxWidth: 12, font: { size: 10 } } }
+                }
+            }
+        });
+    }
+
+    // 2. Status Chart
+    const statusCtx = document.getElementById('statusChart');
+    if (statusCtx && chartData.statuses.labels.length > 0) {
+        new Chart(statusCtx, {
+            type: 'bar',
+            data: {
+                labels: chartData.statuses.labels,
+                datasets: [{
+                    label: 'Issues',
+                    data: chartData.statuses.data,
+                    backgroundColor: '#38bdf8',
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { display: false } },
+                    y: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                }
+            }
+        });
+    }
+
+    // 3. Severity Chart
+    const sevCtx = document.getElementById('severityChart');
+    if (sevCtx && chartData.severities.labels.length > 0) {
+        const sevColors = { 'Low': '#10b981', 'Medium': '#f59e0b', 'High': '#f97316', 'Critical': '#ef4444' };
+        const colors = chartData.severities.labels.map(l => sevColors[l] || '#38bdf8');
+        new Chart(sevCtx, {
+            type: 'doughnut',
+            data: {
+                labels: chartData.severities.labels,
+                datasets: [{
+                    data: chartData.severities.data,
+                    backgroundColor: colors,
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'right', labels: { color: '#94a3b8', boxWidth: 12, font: { size: 10 } } }
+                }
+            }
+        });
+    }
+
+    // 4. Trend Chart
+    const trendCtx = document.getElementById('trendChart');
+    if (trendCtx && chartData.trends.labels.length > 0) {
+        new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: chartData.trends.labels,
+                datasets: [
+                    {
+                        label: 'Reported',
+                        data: chartData.trends.reported,
+                        borderColor: '#06b6d4',
+                        backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                        fill: true,
+                        tension: 0.3
+                    },
+                    {
+                        label: 'Resolved',
+                        data: chartData.trends.resolved,
+                        borderColor: '#10b981',
+                        backgroundColor: 'transparent',
+                        borderDash: [5, 5],
+                        tension: 0.3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top', labels: { color: '#94a3b8', font: { size: 10 } } }
+                },
+                scales: {
+                    x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { display: false } },
+                    y: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                }
+            }
+        });
+    }
+});
+</script>
+
+<style>
+@keyframes pulse {
+    0% { transform: scale(0.95); opacity: 0.7; }
+    50% { transform: scale(1.3); opacity: 1; }
+    100% { transform: scale(0.95); opacity: 0.7; }
+}
+</style>
 {% endblock %}

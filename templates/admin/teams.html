@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Maintenance Teams Management{% endblock %}
+{% block page_heading %}Field Engineering & Maintenance Teams{% endblock %}
+
+{% block content %}
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px; max-width: 1200px; margin: 0 auto;">
+    <!-- Teams Directory & Performance List -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-title">
+                <span>🛠️</span>
+                <span>Active Maintenance Teams ({{ teams|length }})</span>
+            </div>
+            <span style="font-size: 0.8rem; color: var(--text-dim);">Throughput & Workload Telemetry</span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+            {% for t in teams %}
+                <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 18px; transition: var(--transition);">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                        <div>
+                            <h4 style="font-size: 1.05rem; margin-bottom: 4px;">{{ t.team_name }}</h4>
+                            <p style="font-size: 0.82rem; color: var(--text-muted); margin: 0;">{{ t.team_description or 'Specialized field operations crew.' }}</p>
+                        </div>
+                        <span class="badge" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; font-size: 0.8rem; padding: 4px 10px;">
+                            {{ t.active_workload }} Active Tasks
+                        </span>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.05); font-size: 0.82rem;">
+                        <div>
+                            <span style="color: var(--text-dim);">Total Assigned:</span>
+                            <strong style="color: #fff; margin-left: 4px;">{{ t.total_assigned }}</strong>
+                        </div>
+                        <div>
+                            <span style="color: var(--text-dim);">Completion Rate:</span>
+                            <strong style="color: #34d399; margin-left: 4px;">{{ t.completion_rate }}%</strong>
+                        </div>
+                        <div>
+                            <span style="color: var(--text-dim);">Avg Turnaround:</span>
+                            <strong style="color: #38bdf8; margin-left: 4px;">{{ t.avg_turnaround_hours }} hrs</strong>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Create New Team Form -->
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+        <div class="card" style="border-color: rgba(6, 182, 212, 0.3);">
+            <div class="card-header">
+                <div class="card-title">
+                    <span>➕</span>
+                    <span>Add Specialized Team</span>
+                </div>
+            </div>
+
+            <form method="POST" action="{{ url_for('admin.manage_teams') }}">
+                <div class="form-group">
+                    <label class="form-label" for="team_name">Team Name *</label>
+                    <input type="text" id="team_name" name="team_name" class="form-control" placeholder="e.g. Smart Classroom Robotics & AV" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="team_description">Operational Scope & Description</label>
+                    <textarea id="team_description" name="team_description" class="form-control" rows="3" placeholder="Describe equipment types, building coverage, or emergency protocol handling."></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    <span>Create Team</span>
+                </button>
+            </form>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <span>💡</span>
+                    <span>Dispatch Protocol</span>
+                </div>
+            </div>
+            <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.6;">
+                Teams receive immediate task assignments when issues are triaged by the Administrator or automated through AI severity matching.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

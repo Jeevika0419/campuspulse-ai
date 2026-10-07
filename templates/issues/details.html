@@ -259,6 +259,41 @@
             </div>
         </div>
 
+        <!-- AI Recurrence Prediction Panel (Sprint 4) -->
+        <div class="card" id="aiPredictionCard" style="border-color: rgba(139, 92, 246, 0.35); background: rgba(139, 92, 246, 0.04);">
+            <div class="card-header">
+                <div class="card-title">
+                    <span>🤖</span>
+                    <span>AI Recurrence Engine</span>
+                </div>
+                <span style="font-size: 0.7rem; color: var(--text-dim);">CampusPulse-RF-v1.2</span>
+            </div>
+
+            <!-- Stored Risk Level -->
+            <div style="margin-bottom: 14px;">
+                <div style="font-size: 0.75rem; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; font-weight: 700;">
+                    Current Risk Assessment
+                </div>
+                <span class="badge badge-risk-{{ (issue.recurrence_risk or 'low').lower() }}" style="font-size: 0.85rem; padding: 6px 14px;">
+                    {{ issue.recurrence_risk or 'Low' }} Recurrence Risk
+                </span>
+            </div>
+
+            <!-- Run AI Button -->
+            <button id="runAiBtn" class="btn btn-primary btn-sm" style="width: 100%; background: linear-gradient(135deg, #6366f1, #8b5cf6); margin-bottom: 12px;" onclick="runAiPrediction()">
+                <span>⚡ Run AI Prediction Engine</span>
+            </button>
+
+            <!-- AI Results Panel (hidden initially) -->
+            <div id="aiResultPanel" style="display: none;">
+                <div id="aiResultContent"></div>
+            </div>
+
+            <div style="font-size: 0.72rem; color: var(--text-dim); margin-top: 8px;">
+                Powered by feature-weighted ML scoring (simulates Random Forest classifier trained on campus issue history)
+            </div>
+        </div>
+
         <!-- 1. ADMIN ACTION PANEL -->
         {% if current_user_role == 'admin' %}
             <div class="card" style="border-color: rgba(99, 102, 241, 0.35);">
@@ -403,4 +438,68 @@
         {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function runAiPrediction() {
+    const btn = document.getElementById('runAiBtn');
+    const panel = document.getElementById('aiResultPanel');
+    const content = document.getElementById('aiResultContent');
+
+    btn.disabled = true;
+    btn.innerHTML = '<span>⏳ Analyzing...</span>';
+    panel.style.display = 'block';
+    content.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-dim);font-size:0.85rem;">Running ML feature scoring engine...</div>';
+
+    fetch('/api/issues/predict-recurrence', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            issue_type: '{{ issue.issue_type | e }}',
+            location: '{{ issue.location | e }}',
+            severity: '{{ issue.severity | e }}',
+            issue_id: {{ issue.issue_id }}
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) {
+            content.innerHTML = `<div style="color:#f87171;font-size:0.85rem;">Error: ${data.error}</div>`;
+            btn.disabled = false;
+            btn.innerHTML = '<span>⚡ Retry AI Prediction</span>';
+            return;
+        }
+
+        const riskColors = { 'High': '#f87171', 'Medium': '#fbbf24', 'Low': '#34d399' };
+        const riskBg = { 'High': 'rgba(239,68,68,0.1)', 'Medium': 'rgba(245,158,11,0.1)', 'Low': 'rgba(16,185,129,0.1)' };
+        const color = riskColors[data.risk_level] || '#38bdf8';
+        const bg = riskBg[data.risk_level] || 'rgba(6,182,212,0.1)';
+
+        const explanations = (data.feature_explanations || []).map(e =>
+            `<li style="margin-bottom:4px;">${e}</li>`
+        ).join('');
+
+        content.innerHTML = `
+            <div style="padding:12px;border-radius:8px;background:${bg};border:1px solid ${color}30;margin-bottom:10px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                    <span style="font-weight:800;font-size:1.1rem;color:${color};">${data.risk_level} Risk</span>
+                    <span style="font-size:0.8rem;color:var(--text-muted);">Confidence: <strong style="color:${color}">${data.confidence_score}%</strong></span>
+                </div>
+                <div style="font-size:0.82rem;color:var(--text-main);margin-bottom:8px;">${data.summary}</div>
+                ${explanations ? `<ul style="font-size:0.78rem;color:var(--text-muted);padding-left:16px;margin:0;">${explanations}</ul>` : ''}
+                <div style="font-size:0.68rem;color:var(--text-dim);margin-top:8px;">Model: ${data.model_version} · Computed: ${data.computed_at}</div>
+            </div>
+        `;
+
+        btn.disabled = false;
+        btn.innerHTML = '<span>🔄 Re-run Prediction</span>';
+    })
+    .catch(err => {
+        content.innerHTML = `<div style="color:#f87171;font-size:0.85rem;">Network error: ${err.message}</div>`;
+        btn.disabled = false;
+        btn.innerHTML = '<span>⚡ Retry</span>';
+    });
+}
+</script>
 {% endblock %}
