@@ -31,4 +31,13 @@ def save_uploaded_file(file_storage, subfolder="issues"):
     full_path = os.path.join(target_dir, unique_filename)
 
     file_storage.save(full_path)
+
+    # Replicate to Amazon S3 (if enabled or simulated)
+    try:
+        from services.aws_service import aws_service
+        aws_service.upload_file_to_s3(full_path, unique_filename)
+    except Exception as e:
+        # Fallback to local storage only if S3 sync encounters error
+        pass
+
     return unique_filename

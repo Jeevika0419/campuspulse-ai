@@ -212,6 +212,15 @@ def report_issue():
                         issue_id=issue_id
                     )
 
+            # Trigger AWS Cloud Integration (SNS Alert + CloudWatch Metric)
+            try:
+                from services.aws_service import aws_service
+                aws_service.log_issue_reported_metric(issue_type, priority)
+                if priority == "Critical":
+                    aws_service.send_critical_issue_alert(issue_id, issue_type, location, priority)
+            except Exception:
+                pass
+
             flash(f"Issue #{issue_id} reported successfully! Maintenance teams will be dispatched shortly.", "success")
             return redirect(url_for("issues.view_issue", issue_id=issue_id))
 
@@ -430,6 +439,13 @@ def update_status(issue_id):
                 risk_level = update_issue_recurrence_risk(issue_id)
             except Exception:
                 risk_level = "N/A"
+
+            # Log AWS CloudWatch metric
+            try:
+                from services.aws_service import aws_service
+                aws_service.put_metric_data("IssuesResolvedCount", 1, "Count")
+            except Exception:
+                pass
 
         # Notify reporter
         create_notification(

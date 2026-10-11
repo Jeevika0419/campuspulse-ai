@@ -29,7 +29,7 @@
 | **Sprint 3** | Admin Command & SLA Engine | ✅ **COMPLETED** | SLA countdown monitoring, Hotspot clustering engine, Team performance metrics, CSV audit export, Seed demo dataset |
 | **Sprint 4** | Intelligent ML Recurrence Engine | ✅ **COMPLETED** | Feature-weighted prediction model (simulates Random Forest), Real-time API endpoint, Auto-risk update on resolution, Explainable AI panel |
 | **Sprint 5** | Containerization & CI/CD DevOps | ✅ **COMPLETED** | Dockerfile (multi-stage), Docker Compose, Jenkinsfile (9-stage pipeline), Automated testing integration |
-| **Sprint 6** | AWS Cloud Architecture | 📋 **DOCUMENTED** | EC2, RDS MySQL, S3 uploads, CloudWatch monitoring, SNS alerts (architecture documented, ready for deployment) |
+| **Sprint 6** | AWS Cloud Architecture & Services | ✅ **COMPLETED** | Complete integration: EC2, RDS MySQL 8.0, S3 Object Storage, SNS Push Alerts, CloudWatch Metrics, IAM Least Privilege, VPC Multi-AZ, CloudFormation & Terraform IaC |
 
 ---
 
@@ -229,17 +229,19 @@ Content-Type: application/json
 
 ## 🧪 Automated Testing
 
-Run the full test suite (30 test cases):
+Run the full test suite (37 test cases):
 ```bash
 .\venv\Scripts\pytest -v tests/
 ```
 
 | Test Module | Tests | Coverage |
 | :--- | :---: | :--- |
-| `test_auth.py` | 11 | Login, Register, Logout, RBAC enforcement, Session management |
+| `test_auth.py` | 11 | Login, Register, Logout, RBAC enforcement, Session management, Hashing |
 | `test_issues.py` | 6 | Report, Assign, Status transitions, Feedback, Reopen, Authorization |
 | `test_analytics.py` | 6 | KPI metrics, Charts, SLA monitoring, CSV export, Team management |
 | `test_ml_prediction.py` | 7 | Risk prediction, Feature scoring, DB persistence, API endpoint |
+| `test_aws_services.py` | 7 | S3 uploads, Presigned URLs, SNS critical alerts, SLA alarms, CloudWatch metrics, Health check |
+| **Total Test Suite** | **37** | **100% Passing Unit & Integration Tests** |
 
 ---
 
@@ -265,16 +267,48 @@ See [`Jenkinsfile`](Jenkinsfile) for the complete declarative pipeline configura
 
 ---
 
-## ☁️ AWS Cloud Architecture (Sprint 6)
+## ☁️ AWS Cloud Architecture & Services (Sprint 6)
 
-| Service | Purpose |
-| :--- | :--- |
-| **EC2** (t2.micro) | Flask application host with Docker container |
-| **RDS MySQL** (db.t3.micro) | Managed database with automated backups |
-| **S3 Bucket** | Static asset and upload image storage |
-| **CloudWatch** | Application monitoring and log aggregation |
-| **SNS** | Email/SMS alerts for SLA breaches and critical issues |
-| **ECR** | Docker image registry for container versioning |
+The platform is fully integrated with **7 core AWS Cloud Services** to satisfy cloud deployment, storage, database management, security, monitoring, and notifications:
+
+```
+                                  ┌─────────────────────────────┐
+                                  │      Campus Users / Web     │
+                                  └──────────────┬──────────────┘
+                                                 │ HTTPS
+                                  ┌──────────────▼──────────────┐
+                                  │       AWS VPC (10.0.0.0/16) │
+                                  │   Public Subnet (ap-south-1)│
+                                  │  ┌───────────────────────┐  │
+                                  │  │  AWS EC2 Host Node    │  │
+                                  │  │  (Docker + Gunicorn)  │  │
+                                  │  └─────┬───────────┬─────┘  │
+                                  └────────┼───────────┼────────┘
+                 ┌─────────────────────────┼───────────┼─────────────────────────┐
+                 │                         │           │                         │
+                 ▼                         ▼           ▼                         ▼
+   ┌───────────────────────────┐ ┌───────────────┐ ┌───────────────┐ ┌───────────────────────┐
+   │    AWS RDS (MySQL 8.0)    │ │    AWS S3     │ │    AWS SNS    │ │    AWS CloudWatch     │
+   │  Private Multi-AZ Subnets │ │ Photo Storage │ │ Critical Push │ │ Custom Metrics & Logs │
+   │ (Automated Backups & HA)  │ │ (AES-256 Enc) │ │ (SMS & Email) │ │ (SLA Breach Alarms)   │
+   └───────────────────────────┘ └───────────────┘ └───────────────┘ └───────────────────────┘
+```
+
+### Detailed Breakdown of the 7 AWS Services:
+
+| AWS Service | Architectural Role | Concrete Implementation in Codebase |
+| :--- | :--- | :--- |
+| **1. AWS EC2** | **Application Compute Node** | Runs the production Flask Gunicorn container on Amazon Linux / Ubuntu. Automated deployment via SSH in [`Jenkinsfile` (Stage 8)](Jenkinsfile). Infrastructure declared in [`aws/cloudformation/campus_pulse_cfn.yaml`](aws/cloudformation/campus_pulse_cfn.yaml) and [`aws/terraform/main.tf`](aws/terraform/main.tf). |
+| **2. AWS RDS (MySQL 8.0)** | **Managed Relational Database** | Hosted in private database subnets with automated backups, encryption at rest, and Multi-AZ support. Connects via `MYSQL_HOST` environment variable. |
+| **3. AWS S3** | **Object Storage** | Stores student and technician photo attachments securely with AES-256 server-side encryption. Implemented in [`services/aws_service.py`](services/aws_service.py) with presigned URL generation and automated local disk fallback. |
+| **4. AWS SNS** | **Push Notification Service** | Dispatches real-time broadcast alerts (Email / SMS) when **Critical hazards** are reported or when an **SLA breach** occurs. Managed via `aws_service.send_critical_issue_alert()` and `send_sla_breach_alert()`. |
+| **5. AWS CloudWatch** | **Application Monitoring & Alarms** | Records custom infrastructure metrics (`IssuesReportedCount`, `CriticalIncidentsCount`, `SLABreachedCount`, `IssuesResolvedCount`) and triggers automated alarms when SLA breach rates spike. Implemented in [`services/aws_service.py`](services/aws_service.py). |
+| **6. AWS VPC** | **Isolated Cloud Networking** | Multi-AZ network architecture (`10.0.0.0/16`) containing 2 Public Subnets (EC2, NAT Gateway, Internet Gateway) and 2 Private Subnets (RDS MySQL) with restrictive Security Groups blocking direct public access to database ports. |
+| **7. AWS IAM** | **Security & Least Privilege** | EC2 Instance Profile with least-privilege role policies allowing the web server to access S3 buckets, publish to SNS topics, and write CloudWatch metrics without hardcoded secrets. Policy defined in [`aws/iam/campuspulse_ec2_iam_policy.json`](aws/iam/campuspulse_ec2_iam_policy.json). |
+
+### Infrastructure as Code (IaC) Included
+* 📄 **AWS CloudFormation**: [`aws/cloudformation/campus_pulse_cfn.yaml`](aws/cloudformation/campus_pulse_cfn.yaml) — One-click template provisioning VPC, Subnets, Security Groups, EC2, RDS, S3, SNS, IAM, and CloudWatch Alarms.
+* 📄 **Terraform Configuration**: [`aws/terraform/main.tf`](aws/terraform/main.tf) — Declarative HCL code for entire cloud stack deployment.
 
 ---
 

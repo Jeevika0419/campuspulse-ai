@@ -19,3 +19,13 @@ DEBUG = os.getenv("FLASK_DEBUG", "True").lower() in ("true", "1", "yes")
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
 MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB max upload
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
+
+# AWS Cloud Configuration (EC2, RDS, S3, SNS, CloudWatch)
+AWS_REGION = os.getenv("AWS_REGION", "ap-south-1")
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID", "")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "")
+AWS_S3_BUCKET = os.getenv("AWS_S3_BUCKET", "campuspulse-issue-attachments")
+AWS_SNS_TOPIC_ARN = os.getenv("AWS_SNS_TOPIC_ARN", "")
+AWS_CLOUDWATCH_NAMESPACE = os.getenv("AWS_CLOUDWATCH_NAMESPACE", "CampusPulse/Infrastructure")
+# Auto-enable AWS services if credentials exist or if explicitly forced
+AWS_ENABLED = bool(os.getenv("AWS_ACCESS_KEY_ID") and os.getenv("AWS_SECRET_ACCESS_KEY"))

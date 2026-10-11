@@ -1,0 +1,382 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CampusPulse AI — Complete AWS Cloud Infrastructure Stack (VPC, EC2, RDS, S3, SNS, IAM, CloudWatch)'
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: 'campuspulse-prod'
+    Description: 'Environment tag for resources'
+
+  DBMasterUsername:
+    Type: String
+    Default: 'admin'
+    Description: 'Master database username for RDS MySQL'
+
+  DBMasterPassword:
+    Type: String
+    NoEcho: true
+    Default: 'CampusPulse@2025'
+    Description: 'Master database password (min 8 chars)'
+
+  EC2InstanceType:
+    Type: String
+    Default: 't3.micro'
+    AllowedValues: ['t2.micro', 't3.micro', 't3.small']
+    Description: 'EC2 instance class for web application'
+
+  AlertNotificationEmail:
+    Type: String
+    Default: 'admin@campuspulse.edu'
+    Description: 'Email address to subscribe to AWS SNS critical infrastructure alerts'
+
+Resources:
+  # =========================================================================
+  # 1. AWS VPC & NETWORKING (VPC, Subnets, Internet Gateway, Route Tables)
+  # =========================================================================
+  CampusVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: '10.0.0.0/16'
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-vpc'
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-igw'
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref CampusVPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref CampusVPC
+      CidrBlock: '10.0.1.0/24'
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-public-subnet-1a'
+
+  PublicSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref CampusVPC
+      CidrBlock: '10.0.2.0/24'
+      AvailabilityZone: !Select [1, !GetAZs '']
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-public-subnet-1b'
+
+  PrivateSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref CampusVPC
+      CidrBlock: '10.0.10.0/24'
+      AvailabilityZone: !Select [0, !GetAZs '']
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-private-db-subnet-1a'
+
+  PrivateSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref CampusVPC
+      CidrBlock: '10.0.20.0/24'
+      AvailabilityZone: !Select [1, !GetAZs '']
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-private-db-subnet-1b'
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref CampusVPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-public-rt'
+
+  DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: '0.0.0.0/0'
+      GatewayId: !Ref InternetGateway
+
+  SubnetRouteAssociationA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetA
+      RouteTableId: !Ref PublicRouteTable
+
+  SubnetRouteAssociationB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnetB
+      RouteTableId: !Ref PublicRouteTable
+
+  # =========================================================================
+  # 2. AWS SECURITY GROUPS (EC2 & RDS Isolation)
+  # =========================================================================
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: 'Security Group for CampusPulse EC2 Web Server'
+      VpcId: !Ref CampusVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: '0.0.0.0/0'
+        - IpProtocol: tcp
+          FromPort: 5000
+          ToPort: 5000
+          CidrIp: '0.0.0.0/0'
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: '0.0.0.0/0'
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-ec2-sg'
+
+  RDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: 'Security Group for CampusPulse RDS MySQL (isolated to EC2)'
+      VpcId: !Ref CampusVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          SourceSecurityGroupId: !Ref EC2SecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-rds-sg'
+
+  # =========================================================================
+  # 3. AWS S3 (Bucket for Issue Photo Attachments)
+  # =========================================================================
+  AttachmentBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'campuspulse-attachments-${AWS::AccountId}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LifecycleConfiguration:
+        Rules:
+          - Id: TransitionOldAttachmentsToGlacier
+            Status: Enabled
+            Transitions:
+              - TransitionInDays: 90
+                StorageClass: GLACIER
+      Tags:
+        - Key: Application
+          Value: CampusPulse-AI
+
+  # =========================================================================
+  # 4. AWS SNS (Simple Notification Service Topic for Infrastructure Alerts)
+  # =========================================================================
+  InfrastructureAlertTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub '${EnvironmentName}-infrastructure-alerts'
+      DisplayName: 'CampusPulse Infrastructure Alerts'
+
+  AdminEmailSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref InfrastructureAlertTopic
+      Protocol: email
+      Endpoint: !Ref AlertNotificationEmail
+
+  # =========================================================================
+  # 5. AWS IAM (Role & Instance Profile for EC2)
+  # =========================================================================
+  EC2IAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${EnvironmentName}-ec2-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [ec2.amazonaws.com]
+            Action: ['sts:AssumeRole']
+      Policies:
+        - PolicyName: CampusPulseCloudPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:PutObject'
+                  - 's3:GetObject'
+                  - 's3:ListBucket'
+                Resource:
+                  - !GetAtt AttachmentBucket.Arn
+                  - !Sub '${AttachmentBucket.Arn}/*'
+              - Effect: Allow
+                Action:
+                  - 'sns:Publish'
+                Resource: !Ref InfrastructureAlertTopic
+              - Effect: Allow
+                Action:
+                  - 'cloudwatch:PutMetricData'
+                  - 'cloudwatch:GetMetricData'
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: '*'
+
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: '/'
+      Roles:
+        - !Ref EC2IAMRole
+
+  # =========================================================================
+  # 6. AWS RDS (Managed MySQL 8.0 Multi-Subnet Instance)
+  # =========================================================================
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: 'Subnets for CampusPulse RDS MySQL'
+      SubnetIds:
+        - !Ref PrivateSubnetA
+        - !Ref PrivateSubnetB
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-db-subnet-group'
+
+  MySQLDatabaseInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub '${EnvironmentName}-mysql'
+      Engine: mysql
+      EngineVersion: '8.0.35'
+      DBInstanceClass: db.t3.micro
+      AllocatedStorage: '20'
+      StorageType: gp2
+      DBName: campus_issue_system
+      MasterUsername: !Ref DBMasterUsername
+      MasterUserPassword: !Ref DBMasterPassword
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      VPCSecurityGroups:
+        - !Ref RDSSecurityGroup
+      MultiAZ: false
+      PubliclyAccessible: false
+      BackupRetentionPeriod: 7
+      DeletionProtection: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-rds-mysql'
+
+  # =========================================================================
+  # 7. AWS EC2 (Application Host Instance)
+  # =========================================================================
+  EC2AppInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref EC2InstanceType
+      ImageId: 'ami-03f4878e83d3e318f' # Amazon Linux 2023 in ap-south-1 (Mumbai)
+      SubnetId: !Ref PublicSubnetA
+      SecurityGroupIds:
+        - !Ref EC2SecurityGroup
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          dnf update -y
+          dnf install -y docker git
+          systemctl start docker
+          systemctl enable docker
+          usermod -aG docker ec2-user
+
+          # Clone repository and pull docker image
+          git clone https://github.com/campus-issue-system/campuspulse-ai.git /app
+          cd /app
+
+          # Write runtime production .env
+          cat <<EOF > .env
+          MYSQL_HOST=${MySQLDatabaseInstance.Endpoint.Address}
+          MYSQL_USER=${DBMasterUsername}
+          MYSQL_PASSWORD=${DBMasterPassword}
+          MYSQL_DATABASE=campus_issue_system
+          MYSQL_PORT=3306
+          AWS_REGION=${AWS::Region}
+          AWS_S3_BUCKET=${AttachmentBucket}
+          AWS_SNS_TOPIC_ARN=${InfrastructureAlertTopic}
+          AWS_CLOUDWATCH_NAMESPACE=CampusPulse/Infrastructure
+          SECRET_KEY=campuspulse-prod-secret-key-2025
+          FLASK_DEBUG=False
+          EOF
+
+          # Run application container
+          docker run -d --name campuspulse-app \
+            --restart always \
+            -p 80:5000 \
+            --env-file .env \
+            campuspulse-ai:latest
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-app-server'
+
+  # =========================================================================
+  # 8. AWS CLOUDWATCH (SLA Breach & Health Monitoring Alarm)
+  # =========================================================================
+  SLABreachCloudWatchAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub '${EnvironmentName}-SLA-Breaches-High'
+      AlarmDescription: 'Triggers when campus SLA breaches exceed threshold in 15 minutes'
+      Namespace: 'CampusPulse/Infrastructure'
+      MetricName: 'SLABreachedCount'
+      Statistic: Sum
+      Period: 900
+      EvaluationPeriods: 1
+      Threshold: 3
+      ComparisonOperator: GreaterThanThreshold
+      AlarmActions:
+        - !Ref InfrastructureAlertTopic
+
+Outputs:
+  VPCId:
+    Description: 'VPC ID for Campus Infrastructure'
+    Value: !Ref CampusVPC
+
+  EC2PublicIP:
+    Description: 'Public IP of CampusPulse Web Application EC2 Instance'
+    Value: !GetAtt EC2AppInstance.PublicIp
+
+  RDSEndpoint:
+    Description: 'Connection Endpoint for RDS MySQL 8.0'
+    Value: !GetAtt MySQLDatabaseInstance.Endpoint.Address
+
+  S3BucketName:
+    Description: 'S3 Bucket for Issue Image Attachments'
+    Value: !Ref AttachmentBucket
+
+  SNSTopicARN:
+    Description: 'SNS Topic ARN for Critical Alerts and SLA Breaches'
+    Value: !Ref InfrastructureAlertTopic
