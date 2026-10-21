@@ -63,11 +63,13 @@ def dashboard():
         conn.close()
 
     notifications = get_user_notifications(user_id, limit=5)
+    active_issue = next((dict(i) for i in recent_issues if i.get("status") in ("Reported", "Under Review", "Assigned", "In Progress")), None)
 
     return render_template(
         "student/dashboard.html",
         stats=stats,
         recent_issues=recent_issues,
+        active_issue=active_issue,
         notifications=notifications,
         user_name=session.get("name")
     )

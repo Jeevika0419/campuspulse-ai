@@ -3,7 +3,7 @@
 # Multi-stage build for optimized cloud deployment
 # Compatible with AWS ECS, EC2, and ECR
 
-FROM python:3.12-slim-bookworm AS base
+FROM python:3.12-slim-trixie AS base
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -55,11 +55,11 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
 
 # Production WSGI server (Gunicorn with 4 workers)
 CMD ["gunicorn", \
-     "--workers", "4", \
-     "--threads", "2", \
-     "--bind", "0.0.0.0:5000", \
-     "--timeout", "90", \
-     "--access-logfile", "-", \
-     "--error-logfile", "-", \
-     "--log-level", "info", \
-     "app:app"]
+    "--workers", "4", \
+    "--threads", "2", \
+    "--bind", "0.0.0.0:5000", \
+    "--timeout", "90", \
+    "--access-logfile", "-", \
+    "--error-logfile", "-", \
+    "--log-level", "info", \
+    "app:app"]

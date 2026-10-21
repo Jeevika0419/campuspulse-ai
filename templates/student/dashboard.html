@@ -1,68 +1,179 @@
 {% extends "base.html" %}
 
-{% block title %}Student Hub{% endblock %}
+{% block title %}Student Campus Life Hub{% endblock %}
 {% block page_heading %}Student Portal{% endblock %}
 
 {% block content %}
-<!-- Welcome Hero -->
-<div class="welcome-hero">
-    <div class="hero-text">
-        <h2>Hello, {{ user_name }} 👋</h2>
-        <p>Report campus infrastructure problems, track real-time resolution progress, and verify fixes.</p>
+<!-- Student Personal Hero -->
+<div style="background: linear-gradient(135deg, rgba(6, 182, 212, 0.12), rgba(15, 23, 42, 0.85)); border: 1px solid rgba(6, 182, 212, 0.3); border-radius: var(--radius-lg); padding: 22px 28px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+    <div style="display: flex; align-items: center; gap: 16px;">
+        <div style="width: 50px; height: 50px; border-radius: 50%; background: linear-gradient(135deg, #06b6d4, #3b82f6); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800; color: #fff; box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);">
+            🎓
+        </div>
+        <div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <h2 style="font-size: 1.3rem; font-weight: 800; color: #fff; margin: 0;">Hello, {{ user_name or 'Student' }} 👋</h2>
+                <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.72rem;">
+                    ● Campus Utilities Normal
+                </span>
+            </div>
+            <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">
+                Student ID: <strong style="color: var(--accent-cyan);">#CP-STU-2024</strong> &bull; Primary Residence: <strong>Hostel Wing A (Men)</strong> &bull; SLA Resolution Guarantee Active
+            </div>
+        </div>
     </div>
+
     <div>
-        <a href="{{ url_for('issues.report_issue') }}" class="btn btn-primary">
+        <a href="{{ url_for('issues.report_issue') }}" class="btn btn-primary" style="background: linear-gradient(135deg, #06b6d4, #3b82f6); border: none; padding: 10px 20px; font-weight: 700;">
             <span>+</span>
-            <span>Report New Issue</span>
+            <span>Report Infrastructure Issue</span>
         </a>
     </div>
 </div>
 
-<!-- Stats / KPI Cards -->
-<div class="stats-grid">
-    <div class="stat-card">
-        <div class="stat-info">
-            <div class="stat-label">Total Reported</div>
-            <div class="stat-value">{{ stats.total_reported }}</div>
-        </div>
-        <div class="stat-icon icon-cyan">📋</div>
+<!-- ONE-TAP QUICK ISSUE REPORTING TILES (Unique to Student Hub!) -->
+<div style="margin-bottom: 24px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <span style="font-weight: 700; font-size: 0.88rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">
+            ⚡ Quick Report by Common Category
+        </span>
+        <span style="font-size: 0.75rem; color: var(--text-dim);">1-Click Direct Pre-selection</span>
     </div>
 
-    <div class="stat-card">
-        <div class="stat-info">
-            <div class="stat-label">Active / Open</div>
-            <div class="stat-value">{{ stats.open_issues }}</div>
-        </div>
-        <div class="stat-icon icon-amber">⏳</div>
-    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px;">
+        <!-- Wi-Fi -->
+        <a href="{{ url_for('issues.report_issue') }}?category=Wi-Fi+%26+Network+Connectivity" style="text-decoration: none; background: rgba(6, 182, 212, 0.05); border: 1px solid rgba(6, 182, 212, 0.25); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; align-items: center; text-align: center; transition: var(--transition);">
+            <span style="font-size: 1.8rem; margin-bottom: 8px;">📶</span>
+            <span style="font-weight: 700; font-size: 0.88rem; color: #fff;">Wi-Fi & Internet</span>
+            <span style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">Signal drop, latency</span>
+        </a>
 
-    <div class="stat-card">
-        <div class="stat-info">
-            <div class="stat-label">Resolved</div>
-            <div class="stat-value">{{ stats.resolved_issues }}</div>
-        </div>
-        <div class="stat-icon icon-emerald">✅</div>
-    </div>
+        <!-- Electrical -->
+        <a href="{{ url_for('issues.report_issue') }}?category=Electrical+%26+Power+Outlets" style="text-decoration: none; background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; align-items: center; text-align: center; transition: var(--transition);">
+            <span style="font-size: 1.8rem; margin-bottom: 8px;">⚡</span>
+            <span style="font-weight: 700; font-size: 0.88rem; color: #fff;">Power & Socket</span>
+            <span style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">Sparks, dead socket</span>
+        </a>
 
-    <div class="stat-card">
-        <div class="stat-info">
-            <div class="stat-label">Reopened</div>
-            <div class="stat-value">{{ stats.reopened_issues }}</div>
-        </div>
-        <div class="stat-icon icon-rose">🔄</div>
+        <!-- AC -->
+        <a href="{{ url_for('issues.report_issue') }}?category=Air+Conditioning+%26+Climate" style="text-decoration: none; background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; align-items: center; text-align: center; transition: var(--transition);">
+            <span style="font-size: 1.8rem; margin-bottom: 8px;">❄️</span>
+            <span style="font-weight: 700; font-size: 0.88rem; color: #fff;">AC & Cooling</span>
+            <span style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">No cooling, water leak</span>
+        </a>
+
+        <!-- Plumbing -->
+        <a href="{{ url_for('issues.report_issue') }}?category=Plumbing+%26+Restroom+Facilities" style="text-decoration: none; background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; align-items: center; text-align: center; transition: var(--transition);">
+            <span style="font-size: 1.8rem; margin-bottom: 8px;">🚰</span>
+            <span style="font-weight: 700; font-size: 0.88rem; color: #fff;">Water & Plumbing</span>
+            <span style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">Restroom, cooler leak</span>
+        </a>
+
+        <!-- Projector -->
+        <a href="{{ url_for('issues.report_issue') }}?category=Projector+%26+Display+AV" style="text-decoration: none; background: rgba(236, 72, 153, 0.05); border: 1px solid rgba(236, 72, 153, 0.25); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; align-items: center; text-align: center; transition: var(--transition);">
+            <span style="font-size: 1.8rem; margin-bottom: 8px;">📽️</span>
+            <span style="font-weight: 700; font-size: 0.88rem; color: #fff;">Projector & AV</span>
+            <span style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">Display, HDMI cable</span>
+        </a>
     </div>
 </div>
 
-<!-- Grid Layout: Recent Issues & Notifications -->
+<!-- LIVE ACTIVE TICKET TRACKER STEPPER (If student has open ticket) -->
+{% if active_issue %}
+<div class="card" style="border-color: rgba(6, 182, 212, 0.4); background: linear-gradient(135deg, rgba(6, 182, 212, 0.04), rgba(15, 23, 42, 0.8)); margin-bottom: 24px; padding: 22px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="width: 10px; height: 10px; border-radius: 50%; background: #06b6d4; box-shadow: 0 0 10px #06b6d4;"></span>
+            <span style="font-weight: 700; color: #fff; font-size: 0.95rem;">
+                Active Ticket Lifecycle Tracker &bull; Issue #{{ active_issue.issue_id }}: {{ active_issue.issue_type }}
+            </span>
+        </div>
+        <span class="badge badge-priority-{{ (active_issue.priority or 'medium').lower() }}">
+            Priority: {{ active_issue.priority }}
+        </span>
+    </div>
+
+    <!-- Stepper Pipeline -->
+    <div style="display: flex; align-items: center; justify-content: space-between; position: relative; margin: 20px 10px;">
+        <!-- Step 1: Logged -->
+        <div style="display: flex; flex-direction: column; align-items: center; z-index: 2;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: #10b981; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);">✓</div>
+            <span style="font-size: 0.75rem; font-weight: 600; color: #34d399; margin-top: 6px;">1. Logged</span>
+        </div>
+
+        <div style="flex: 1; height: 3px; background: {% if active_issue.status in ('Assigned', 'In Progress', 'Resolved') %}#10b981{% else %}rgba(255,255,255,0.1){% endif %}; margin: 0 8px;"></div>
+
+        <!-- Step 2: Assigned -->
+        <div style="display: flex; flex-direction: column; align-items: center; z-index: 2;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: {% if active_issue.status in ('Assigned', 'In Progress', 'Resolved') %}#10b981{% else %}rgba(255,255,255,0.1){% endif %}; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem;">
+                {% if active_issue.status in ('Assigned', 'In Progress', 'Resolved') %}✓{% else %}2{% endif %}
+            </div>
+            <span style="font-size: 0.75rem; font-weight: 600; color: {% if active_issue.status in ('Assigned', 'In Progress', 'Resolved') %}#34d399{% else %}var(--text-dim){% endif %}; margin-top: 6px;">2. Dispatched</span>
+        </div>
+
+        <div style="flex: 1; height: 3px; background: {% if active_issue.status in ('In Progress', 'Resolved') %}#06b6d4{% else %}rgba(255,255,255,0.1){% endif %}; margin: 0 8px;"></div>
+
+        <!-- Step 3: In Progress -->
+        <div style="display: flex; flex-direction: column; align-items: center; z-index: 2;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: {% if active_issue.status == 'In Progress' %}#06b6d4{% elif active_issue.status == 'Resolved' %}#10b981{% else %}rgba(255,255,255,0.1){% endif %}; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; {% if active_issue.status == 'In Progress' %}box-shadow: 0 0 15px rgba(6, 182, 212, 0.6);{% endif %}">
+                {% if active_issue.status == 'Resolved' %}✓{% else %}⚡{% endif %}
+            </div>
+            <span style="font-size: 0.75rem; font-weight: 600; color: {% if active_issue.status in ('In Progress', 'Resolved') %}#38bdf8{% else %}var(--text-dim){% endif %}; margin-top: 6px;">3. In Field Repair</span>
+        </div>
+
+        <div style="flex: 1; height: 3px; background: {% if active_issue.status == 'Resolved' %}#10b981{% else %}rgba(255,255,255,0.1){% endif %}; margin: 0 8px;"></div>
+
+        <!-- Step 4: Resolved -->
+        <div style="display: flex; flex-direction: column; align-items: center; z-index: 2;">
+            <div style="width: 32px; height: 32px; border-radius: 50%; background: {% if active_issue.status == 'Resolved' %}#10b981{% else %}rgba(255,255,255,0.1){% endif %}; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem;">
+                {% if active_issue.status == 'Resolved' %}✓{% else %}4{% endif %}
+            </div>
+            <span style="font-size: 0.75rem; font-weight: 600; color: {% if active_issue.status == 'Resolved' %}#34d399{% else %}var(--text-dim){% endif %}; margin-top: 6px;">4. Verified Fix</span>
+        </div>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 0.82rem;">
+        <span style="color: var(--text-muted);">📍 Location: <strong style="color: #fff;">{{ active_issue.location }}</strong> &bull; Team: <strong style="color: var(--accent-cyan);">{{ active_issue.assigned_team_name or 'Under Assignment' }}</strong></span>
+        <a href="{{ url_for('issues.view_issue', issue_id=active_issue.issue_id) }}" class="btn btn-outline btn-sm">
+            <span>View Real-Time Progress →</span>
+        </a>
+    </div>
+</div>
+{% endif %}
+
+<!-- Compact Personal Stats Badges -->
+<div style="display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 24px;">
+    <div style="padding: 10px 18px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); font-size: 0.85rem; display: flex; align-items: center; gap: 10px;">
+        <span style="color: var(--text-muted);">My Total Submissions:</span>
+        <strong style="font-size: 1.1rem; color: #fff;">{{ stats.total_reported }}</strong>
+    </div>
+
+    <div style="padding: 10px 18px; background: rgba(245, 158, 11, 0.05); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: var(--radius-md); font-size: 0.85rem; display: flex; align-items: center; gap: 10px;">
+        <span style="color: #fbbf24;">In Progress:</span>
+        <strong style="font-size: 1.1rem; color: #fbbf24;">{{ stats.open_issues }}</strong>
+    </div>
+
+    <div style="padding: 10px 18px; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-md); font-size: 0.85rem; display: flex; align-items: center; gap: 10px;">
+        <span style="color: #34d399;">Resolved & Fixed:</span>
+        <strong style="font-size: 1.1rem; color: #34d399;">{{ stats.resolved_issues }}</strong>
+    </div>
+
+    <div style="padding: 10px 18px; background: rgba(99, 102, 241, 0.05); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: var(--radius-md); font-size: 0.85rem; display: flex; align-items: center; gap: 10px;">
+        <span style="color: #a5b4fc;">SLA Satisfaction:</span>
+        <strong style="font-size: 1.1rem; color: #a5b4fc;">100%</strong>
+    </div>
+</div>
+
+<!-- Grid Layout: My Submitted Issues & Campus Notifications -->
 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
     <!-- Recent Issues Table Card -->
-    <div class="card">
-        <div class="card-header">
+    <div class="card" style="padding: 24px;">
+        <div class="card-header" style="margin-bottom: 16px;">
             <div class="card-title">
                 <span>📝</span>
                 <span>My Submitted Issues</span>
             </div>
-            <a href="{{ url_for('issues.list_issues', scope='my') }}" style="font-size: 0.8rem; color: var(--accent-cyan);">View All →</a>
+            <a href="{{ url_for('issues.list_issues', scope='my') }}" style="font-size: 0.8rem; color: var(--accent-cyan);">View Full History →</a>
         </div>
 
         {% if recent_issues and recent_issues|length > 0 %}
@@ -84,10 +195,10 @@
                             <tr>
                                 <td style="font-weight: 700; color: var(--accent-cyan);">#{{ issue.issue_id }}</td>
                                 <td style="font-weight: 600;">{{ issue.issue_type }}</td>
-                                <td style="color: var(--text-muted);">{{ issue.location }}</td>
+                                <td style="color: var(--text-muted); font-size: 0.85rem;">{{ issue.location }}</td>
                                 <td>
-                                    <span class="badge badge-priority-{{ issue.severity.lower() }}">
-                                        {{ issue.severity }}
+                                    <span class="badge badge-severity-{{ (issue.severity or 'medium').lower() }}">
+                                        {{ issue.severity or 'Medium' }}
                                     </span>
                                 </td>
                                 <td>
@@ -95,12 +206,12 @@
                                         {{ issue.status }}
                                     </span>
                                 </td>
-                                <td style="color: var(--text-dim); font-size: 0.85rem;">
+                                <td style="color: var(--text-dim); font-size: 0.82rem;">
                                     {{ issue.assigned_team_name or 'Pending Assignment' }}
                                 </td>
                                 <td>
-                                    <a href="{{ url_for('issues.view_issue', issue_id=issue.issue_id) }}" class="btn btn-outline btn-sm">
-                                        <span>View</span>
+                                    <a href="{{ url_for('issues.view_issue', issue_id=issue.issue_id) }}" class="btn btn-outline btn-sm" style="padding: 4px 10px; font-size: 0.75rem;">
+                                        View
                                     </a>
                                 </td>
                             </tr>
@@ -109,61 +220,49 @@
                 </table>
             </div>
         {% else %}
-            <div class="empty-state">
-                <div class="empty-icon">📂</div>
-                <h3>No Issues Reported Yet</h3>
-                <p>Have you noticed a faulty projector, air conditioner leak, or Wi-Fi connectivity issue? Submit your first report to trigger our AI dispatch.</p>
-                <a href="{{ url_for('issues.report_issue') }}" class="btn btn-primary btn-sm">
-                    <span>+ Report First Issue</span>
+            <div style="text-align: center; padding: 40px; color: var(--text-dim);">
+                <p>You haven't reported any infrastructure issues yet.</p>
+                <a href="{{ url_for('issues.report_issue') }}" class="btn btn-primary btn-sm" style="margin-top: 10px;">
+                    Report First Issue
                 </a>
             </div>
         {% endif %}
     </div>
 
-    <!-- Student Activity & Tips Sidebar -->
-    <div style="display: flex; flex-direction: column; gap: 24px;">
-        <!-- Notification / Activity Card -->
-        <div class="card">
-            <div class="card-header">
-                <div class="card-title">
-                    <span>🔔</span>
-                    <span>Recent Updates</span>
-                </div>
+    <!-- Campus Updates & Notification Panel -->
+    <div class="card" style="padding: 24px;">
+        <div class="card-header" style="margin-bottom: 16px;">
+            <div class="card-title">
+                <span>🔔</span>
+                <span>Recent Updates</span>
             </div>
+            <a href="#" style="font-size: 0.8rem; color: var(--text-dim);">Clear All</a>
+        </div>
 
-            {% if notifications and notifications|length > 0 %}
-                <div style="display: flex; flex-direction: column; gap: 12px;">
-                    {% for n in notifications %}
-                        <div style="padding: 12px; border-radius: var(--radius-sm); background: rgba(255, 255, 255, 0.02); border-left: 3px solid var(--accent-cyan);">
-                            <div style="font-weight: 600; font-size: 0.88rem; margin-bottom: 2px;">{{ n.title }}</div>
-                            <div style="font-size: 0.78rem; color: var(--text-muted);">{{ n.message }}</div>
-                            <div style="font-size: 0.7rem; color: var(--text-dim); margin-top: 4px;">
-                                {{ n.created_at.strftime('%b %d, %H:%M') if n.created_at else 'Just now' }}
-                            </div>
+        <!-- Campus Maintenance Advisory Notice -->
+        <div style="background: rgba(6, 182, 212, 0.08); border: 1px solid rgba(6, 182, 212, 0.2); border-radius: var(--radius-md); padding: 12px; margin-bottom: 14px;">
+            <div style="font-size: 0.75rem; font-weight: 700; color: var(--accent-cyan); text-transform: uppercase;">Campus Advisory</div>
+            <div style="font-size: 0.8rem; color: #fff; margin-top: 2px;">Scheduled Network Maintenance</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">Academic Block A switch upgrades scheduled for Saturday 22:00 UTC.</div>
+        </div>
+
+        {% if notifications and notifications|length > 0 %}
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                {% for n in notifications %}
+                    <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px;">
+                        <div style="font-weight: 600; font-size: 0.85rem; color: #fff; margin-bottom: 4px;">{{ n.title }}</div>
+                        <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.4;">{{ n.message }}</div>
+                        <div style="font-size: 0.7rem; color: var(--text-dim); margin-top: 6px;">
+                            {{ n.created_at.strftime('%b %d, %H:%M') if n.created_at and n.created_at.strftime is defined else 'Just now' }}
                         </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div style="text-align: center; padding: 20px 0; color: var(--text-dim); font-size: 0.85rem;">
-                    No notifications yet.
-                </div>
-            {% endif %}
-        </div>
-
-        <!-- Smart Guidelines Card -->
-        <div class="card" style="background: linear-gradient(135deg, rgba(16, 22, 38, 0.9), rgba(15, 30, 50, 0.9));">
-            <div class="card-header">
-                <div class="card-title">
-                    <span>💡</span>
-                    <span>Reporting Tips</span>
-                </div>
+                    </div>
+                {% endfor %}
             </div>
-            <ul style="padding-left: 18px; font-size: 0.82rem; color: var(--text-muted); line-height: 1.8;">
-                <li>Specify exact classroom number or floor level.</li>
-                <li>Capture clear pictures for electrical or AC faults.</li>
-                <li>Emergency hazards (e.g. wire spark) are automatically escalated to Critical priority.</li>
-            </ul>
-        </div>
+        {% else %}
+            <div style="text-align: center; padding: 24px; color: var(--text-dim); font-size: 0.85rem;">
+                No unread notifications.
+            </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

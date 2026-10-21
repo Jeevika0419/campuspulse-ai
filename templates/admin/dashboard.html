@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Admin Command Center{% endblock %}
+{% block title %}Executive Infrastructure Analytics{% endblock %}
 {% block page_heading %}Executive Infrastructure Analytics{% endblock %}
 
 {% block extra_head %}
@@ -9,15 +9,23 @@
 {% endblock %}
 
 {% block content %}
-<!-- Quick Action Bar -->
-<div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 24px;">
-    <div style="display: flex; align-items: center; gap: 12px;">
-        <span class="badge badge-risk-low" style="padding: 6px 14px; font-size: 0.8rem;">
-            ● Telemetry: Online & Synchronized
-        </span>
-        <span style="font-size: 0.82rem; color: var(--text-muted);">
-            Avg Satisfaction: <strong style="color: #fbbf24;">{{ stats.avg_satisfaction_rating or '4.8' }} ★</strong>
-        </span>
+<!-- Executive Action & Telemetry Bar -->
+<div style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.6)); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: var(--radius-lg); padding: 18px 24px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+    <div style="display: flex; align-items: center; gap: 14px;">
+        <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.3); display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
+            ⚡
+        </div>
+        <div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-weight: 700; font-size: 1.1rem; color: #fff;">Executive Command Center</span>
+                <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.35); font-size: 0.72rem;">
+                    ● Telemetry Online & Synchronized
+                </span>
+            </div>
+            <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">
+                Campus Infrastructure Health Index &bull; Student Satisfaction: <strong style="color: #fbbf24;">{{ stats.avg_satisfaction_rating or '4.8' }} ★</strong> &bull; AWS Cloud Integration Active
+            </div>
+        </div>
     </div>
 
     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
@@ -36,83 +44,107 @@
             <span>🛠️ Maintenance Teams</span>
         </a>
         <form method="POST" action="{{ url_for('admin.seed_data_route') }}" style="display: inline;">
-            <button type="submit" class="btn btn-primary btn-sm" style="background: linear-gradient(135deg, #06b6d4, #6366f1);">
+            <button type="submit" class="btn btn-primary btn-sm" style="background: linear-gradient(135deg, #06b6d4, #6366f1); border: none;">
                 <span>⚡ Seed Demo Dataset</span>
             </button>
         </form>
     </div>
 </div>
 
-<!-- Executive Stats Grid (Cards) -->
-<div class="stats-grid">
-    <div class="stat-card">
-        <div class="stat-info">
-            <div class="stat-label">Total Issues</div>
-            <div class="stat-value">{{ stats.total_issues }}</div>
+<!-- Executive Metric Band (Distinct 4-Card Strategic Grid) -->
+<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
+    <!-- Metric 1: Total Incidents -->
+    <div style="background: linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(15, 23, 42, 0.7)); border: 1px solid rgba(6, 182, 212, 0.25); border-radius: var(--radius-lg); padding: 20px; position: relative; overflow: hidden;">
+        <div style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent-cyan);">Total Campus Reports</div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: 6px;">
+            <span style="font-size: 2.2rem; font-weight: 800; color: #fff; font-family: var(--font-heading);">{{ stats.total_issues }}</span>
+            <span style="font-size: 0.8rem; color: #34d399; font-weight: 600;">+21 seeded</span>
         </div>
-        <div class="stat-icon icon-cyan">📊</div>
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Cumulative infrastructure issues logged</div>
     </div>
 
-    <div class="stat-card">
-        <div class="stat-info">
-            <div class="stat-label">Active Workload</div>
-            <div class="stat-value">{{ stats.open_issues }}</div>
+    <!-- Metric 2: Active Workload Backlog -->
+    <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(15, 23, 42, 0.7)); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: var(--radius-lg); padding: 20px;">
+        <div style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #fbbf24;">Active Workload Backlog</div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: 6px;">
+            <span style="font-size: 2.2rem; font-weight: 800; color: #fbbf24; font-family: var(--font-heading);">{{ stats.open_issues }}</span>
+            <span style="font-size: 0.8rem; color: var(--text-muted);">{{ stats.resolved_issues }} resolved</span>
         </div>
-        <div class="stat-icon icon-amber">⏳</div>
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Currently pending technician sign-off</div>
     </div>
 
-    <div class="stat-card">
-        <div class="stat-info">
-            <div class="stat-label">Critical Priority</div>
-            <div class="stat-value" style="color: #f87171;">{{ stats.critical_issues }}</div>
+    <!-- Metric 3: Critical Priority Incidents -->
+    <div style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(15, 23, 42, 0.7)); border: 1px solid rgba(239, 68, 68, 0.35); border-radius: var(--radius-lg); padding: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #f87171;">Critical Emergencies</span>
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 10px #ef4444;"></span>
         </div>
-        <div class="stat-icon icon-rose">🚨</div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: 6px;">
+            <span style="font-size: 2.2rem; font-weight: 800; color: #f87171; font-family: var(--font-heading);">{{ stats.critical_issues }}</span>
+            <span class="badge" style="background: rgba(239, 68, 68, 0.2); color: #f87171; font-size: 0.7rem; font-weight: 700;">Immediate Action</span>
+        </div>
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Life-safety and severe facility disruptions</div>
     </div>
 
-    <div class="stat-card">
-        <div class="stat-info">
-            <div class="stat-label">Resolved Issues</div>
-            <div class="stat-value" style="color: #34d399;">{{ stats.resolved_issues }}</div>
+    <!-- Metric 4: Mean Time to Resolution (MTTR) -->
+    <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(15, 23, 42, 0.7)); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: var(--radius-lg); padding: 20px;">
+        <div style="font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #a5b4fc;">Avg Resolution Time</div>
+        <div style="display: flex; align-items: baseline; justify-content: space-between; margin-top: 6px;">
+            <span style="font-size: 2.2rem; font-weight: 800; color: #fff; font-family: var(--font-heading);">{{ stats.avg_resolution_hours }}<span style="font-size: 1.1rem; color: var(--text-muted);">h</span></span>
+            <span style="font-size: 0.8rem; color: #34d399; font-weight: 600;">SLA Compliant</span>
         </div>
-        <div class="stat-icon icon-emerald">✅</div>
-    </div>
-
-    <div class="stat-card">
-        <div class="stat-info">
-            <div class="stat-label">SLA Breaches</div>
-            <div class="stat-value" style="color: {% if stats.sla_breaches > 0 %}#f87171{% else %}#34d399{% endif %};">
-                {{ stats.sla_breaches }}
-            </div>
-        </div>
-        <div class="stat-icon icon-rose">⚠️</div>
-    </div>
-
-    <div class="stat-card">
-        <div class="stat-info">
-            <div class="stat-label">Avg Resolution</div>
-            <div class="stat-value">{{ stats.avg_resolution_hours }}<span style="font-size: 1.1rem; color: var(--text-muted);">h</span></div>
-        </div>
-        <div class="stat-icon icon-blue">⏱️</div>
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Average turnaround across all teams</div>
     </div>
 </div>
 
-<!-- Stylized Campus Hotspots Visualizer Section -->
+<!-- Executive Visual Analytics: Charts Section -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+    <!-- 1. Category Distribution Doughnut Chart -->
+    <div class="card" style="padding: 24px;">
+        <div class="card-header" style="margin-bottom: 16px;">
+            <div class="card-title">
+                <span>🍩</span>
+                <span>Issue Distribution by Category</span>
+            </div>
+            <span style="font-size: 0.75rem; color: var(--text-dim);">Infrastructure Hardware Breakdown</span>
+        </div>
+        <div style="position: relative; height: 260px; display: flex; align-items: center; justify-content: center;">
+            <canvas id="categoryChart"></canvas>
+        </div>
+    </div>
+
+    <!-- 2. Resolution Trend Line Chart -->
+    <div class="card" style="padding: 24px;">
+        <div class="card-header" style="margin-bottom: 16px;">
+            <div class="card-title">
+                <span>📈</span>
+                <span>Monthly Resolution Velocity</span>
+            </div>
+            <span style="font-size: 0.75rem; color: var(--text-dim);">Throughput (Reported vs Resolved)</span>
+        </div>
+        <div style="position: relative; height: 260px; display: flex; align-items: center; justify-content: center;">
+            <canvas id="trendChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Campus Infrastructure Problem Hotspots Visualizer -->
 <div class="card" style="margin-bottom: 24px; padding: 24px;">
-    <div class="card-header">
+    <div class="card-header" style="margin-bottom: 16px;">
         <div class="card-title">
             <span>📍</span>
             <span>Campus Infrastructure Problem Hotspots</span>
         </div>
-        <span style="font-size: 0.8rem; color: var(--text-dim);">Stylized Campus Clustering Engine</span>
+        <span style="font-size: 0.8rem; color: var(--text-dim);">Spatial Clustering & Risk Engine</span>
     </div>
 
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
         {% for h in hotspot_clusters %}
-            {% set is_hot = h.issue_count >= 4 %}
+            {% set is_hot = h.issue_count >= 3 %}
             <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid {% if is_hot %}rgba(239, 68, 68, 0.35){% else %}var(--border-subtle){% endif %}; border-radius: var(--radius-md); padding: 16px; position: relative; overflow: hidden; transition: var(--transition);">
                 {% if is_hot %}
                     <div style="position: absolute; top: 12px; right: 12px; display: flex; align-items: center; gap: 6px;">
-                        <span style="width: 8px; height: 8px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 10px #ef4444; animation: pulse 1.5s infinite;"></span>
+                        <span style="width: 8px; height: 8px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 10px #ef4444;"></span>
                         <span style="font-size: 0.7rem; font-weight: 700; color: #f87171; text-transform: uppercase;">Hotspot</span>
                     </div>
                 {% endif %}
@@ -139,70 +171,11 @@
     </div>
 </div>
 
-<!-- Charts Grid (2x2 Grid) -->
-<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
-    <!-- 1. Category Distribution Doughnut Chart -->
-    <div class="card">
-        <div class="card-header">
-            <div class="card-title">
-                <span>🍩</span>
-                <span>Issues by Category</span>
-            </div>
-            <span style="font-size: 0.75rem; color: var(--text-dim);">Hardware Distribution</span>
-        </div>
-        <div style="position: relative; height: 260px; display: flex; align-items: center; justify-content: center;">
-            <canvas id="categoryChart"></canvas>
-        </div>
-    </div>
-
-    <!-- 2. Status Breakdown Bar Chart -->
-    <div class="card">
-        <div class="card-header">
-            <div class="card-title">
-                <span>📊</span>
-                <span>Lifecycle Status Breakdown</span>
-            </div>
-            <span style="font-size: 0.75rem; color: var(--text-dim);">Work Order State</span>
-        </div>
-        <div style="position: relative; height: 260px; display: flex; align-items: center; justify-content: center;">
-            <canvas id="statusChart"></canvas>
-        </div>
-    </div>
-
-    <!-- 3. Severity Distribution Doughnut Chart -->
-    <div class="card">
-        <div class="card-header">
-            <div class="card-title">
-                <span>⚠️</span>
-                <span>Severity Distribution</span>
-            </div>
-            <span style="font-size: 0.75rem; color: var(--text-dim);">Triage Level</span>
-        </div>
-        <div style="position: relative; height: 260px; display: flex; align-items: center; justify-content: center;">
-            <canvas id="severityChart"></canvas>
-        </div>
-    </div>
-
-    <!-- 4. Monthly Issue Trend Line Chart -->
-    <div class="card">
-        <div class="card-header">
-            <div class="card-title">
-                <span>📈</span>
-                <span>Resolution Trend (Reported vs Fixed)</span>
-            </div>
-            <span style="font-size: 0.75rem; color: var(--text-dim);">Temporal Throughput</span>
-        </div>
-        <div style="position: relative; height: 260px; display: flex; align-items: center; justify-content: center;">
-            <canvas id="trendChart"></canvas>
-        </div>
-    </div>
-</div>
-
-<!-- Main Split: Live Issue Stream & Teams Workload -->
+<!-- Live Campus Issue Stream & Teams Workload -->
 <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 24px;">
     <!-- Issue Stream Table -->
-    <div class="card">
-        <div class="card-header">
+    <div class="card" style="padding: 24px;">
+        <div class="card-header" style="margin-bottom: 16px;">
             <div class="card-title">
                 <span>📋</span>
                 <span>Live Campus Issue Stream</span>
@@ -238,13 +211,13 @@
                                 <td>
                                     <span class="badge" style="
                                         {% if issue.sla.badge == 'danger' %}
-                                            background: rgba(239, 68, 68, 0.15); color: #f87171;
+                                            background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);
                                         {% elif issue.sla.badge == 'warning' %}
-                                            background: rgba(245, 158, 11, 0.15); color: #fbbf24;
+                                            background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3);
                                         {% elif issue.sla.badge == 'success' %}
-                                            background: rgba(16, 185, 129, 0.15); color: #34d399;
+                                            background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);
                                         {% else %}
-                                            background: rgba(6, 182, 212, 0.12); color: #38bdf8;
+                                            background: rgba(255, 255, 255, 0.05); color: var(--text-dim);
                                         {% endif %}
                                     ">
                                         {{ issue.sla.label }}
@@ -256,8 +229,8 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <a href="{{ url_for('issues.view_issue', issue_id=issue.issue_id) }}" class="btn btn-outline btn-sm">
-                                        <span>Dispatch</span>
+                                    <a href="{{ url_for('issues.view_issue', issue_id=issue.issue_id) }}" class="btn btn-outline btn-sm" style="padding: 4px 10px; font-size: 0.75rem;">
+                                        Inspect
                                     </a>
                                 </td>
                             </tr>
@@ -266,60 +239,57 @@
                 </table>
             </div>
         {% else %}
-            <div class="empty-state">
-                <div class="empty-icon">📂</div>
-                <h3>No Issues Currently Logged</h3>
-                <p>Click "Seed Demo Dataset" to populate realistic campus records for demonstration.</p>
+            <div style="text-align: center; padding: 32px; color: var(--text-dim);">
+                No issues recorded yet. Click <strong>"Seed Demo Dataset"</strong> above to populate!
             </div>
         {% endif %}
     </div>
 
-    <!-- Maintenance Teams Workload Card -->
-    <div class="card">
-        <div class="card-header">
+    <!-- Teams Workload Card -->
+    <div class="card" style="padding: 24px;">
+        <div class="card-header" style="margin-bottom: 16px;">
             <div class="card-title">
                 <span>🛠️</span>
-                <span>Team Throughput</span>
+                <span>Team Capacity & Load</span>
             </div>
             <a href="{{ url_for('admin.manage_teams') }}" style="font-size: 0.8rem; color: var(--accent-cyan);">Manage →</a>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div style="display: flex; flex-direction: column; gap: 14px;">
             {% for t in teams %}
-                <div style="padding: 12px; border-radius: var(--radius-sm); background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                        <span style="font-weight: 600; font-size: 0.88rem;">{{ t.team_name }}</span>
-                        <span class="badge" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; font-size: 0.72rem;">
-                            {{ t.active_workload }} Active
-                        </span>
+                <div style="padding: 12px; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle); border-radius: var(--radius-md);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="font-weight: 600; font-size: 0.88rem; color: #fff;">{{ t.team_name }}</span>
+                        <span style="font-size: 0.75rem; color: #34d399; font-weight: 700;">{{ t.completion_rate }}% done</span>
                     </div>
-                    <div style="display: flex; justify-content: space-between; font-size: 0.76rem; color: var(--text-dim);">
-                        <span>Completed: {{ t.completed_tasks }}/{{ t.total_assigned }} ({{ t.completion_rate }}%)</span>
-                        <span>Avg: {{ t.avg_turnaround_hours }}h</span>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-dim);">
+                        <span>Active: <strong style="color: #fbbf24;">{{ t.active_issues }}</strong></span>
+                        <span>Resolved: <strong style="color: #34d399;">{{ t.resolved_issues }}</strong></span>
                     </div>
                 </div>
             {% endfor %}
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_scripts %}
+<!-- Client-side Chart.js Script -->
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    const chartData = {{ chart_data|tojson }};
-    const defaultColors = ['#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#64748b', '#0ea5e9'];
+    const rawCategories = {{ (chart_data.categories if chart_data and chart_data.categories else {'labels': [], 'data': []}) | tojson }};
+    const rawTrend = {{ (chart_data.trends if chart_data and chart_data.trends else (chart_data.trend if chart_data and chart_data.trend else {'labels': [], 'reported': [], 'resolved': []})) | tojson }};
 
-    // 1. Category Chart
-    const catCtx = document.getElementById('categoryChart');
-    if (catCtx && chartData.categories.labels.length > 0) {
+    // 1. Category Donut Chart
+    const catCtx = document.getElementById("categoryChart");
+    if (catCtx && rawCategories.labels && rawCategories.labels.length > 0) {
         new Chart(catCtx, {
-            type: 'doughnut',
+            type: "doughnut",
             data: {
-                labels: chartData.categories.labels,
+                labels: rawCategories.labels,
                 datasets: [{
-                    data: chartData.categories.data,
-                    backgroundColor: defaultColors,
+                    data: rawCategories.data || rawCategories.values || [],
+                    backgroundColor: [
+                        "#06b6d4", "#6366f1", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6"
+                    ],
                     borderWidth: 0
                 }]
             },
@@ -327,86 +297,38 @@ document.addEventListener("DOMContentLoaded", function() {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { position: 'right', labels: { color: '#94a3b8', boxWidth: 12, font: { size: 10 } } }
+                    legend: {
+                        position: "right",
+                        labels: { color: "#94a3b8", font: { size: 11 } }
+                    }
                 }
             }
         });
     }
 
-    // 2. Status Chart
-    const statusCtx = document.getElementById('statusChart');
-    if (statusCtx && chartData.statuses.labels.length > 0) {
-        new Chart(statusCtx, {
-            type: 'bar',
-            data: {
-                labels: chartData.statuses.labels,
-                datasets: [{
-                    label: 'Issues',
-                    data: chartData.statuses.data,
-                    backgroundColor: '#38bdf8',
-                    borderRadius: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { display: false } },
-                    y: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
-                }
-            }
-        });
-    }
-
-    // 3. Severity Chart
-    const sevCtx = document.getElementById('severityChart');
-    if (sevCtx && chartData.severities.labels.length > 0) {
-        const sevColors = { 'Low': '#10b981', 'Medium': '#f59e0b', 'High': '#f97316', 'Critical': '#ef4444' };
-        const colors = chartData.severities.labels.map(l => sevColors[l] || '#38bdf8');
-        new Chart(sevCtx, {
-            type: 'doughnut',
-            data: {
-                labels: chartData.severities.labels,
-                datasets: [{
-                    data: chartData.severities.data,
-                    backgroundColor: colors,
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'right', labels: { color: '#94a3b8', boxWidth: 12, font: { size: 10 } } }
-                }
-            }
-        });
-    }
-
-    // 4. Trend Chart
-    const trendCtx = document.getElementById('trendChart');
-    if (trendCtx && chartData.trends.labels.length > 0) {
+    // 2. Trend Line Chart
+    const trendCtx = document.getElementById("trendChart");
+    if (trendCtx) {
         new Chart(trendCtx, {
-            type: 'line',
+            type: "line",
             data: {
-                labels: chartData.trends.labels,
+                labels: rawTrend.labels,
                 datasets: [
                     {
-                        label: 'Reported',
-                        data: chartData.trends.reported,
-                        borderColor: '#06b6d4',
-                        backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                        label: "Reported",
+                        data: rawTrend.reported,
+                        borderColor: "#06b6d4",
+                        backgroundColor: "rgba(6, 182, 212, 0.1)",
                         fill: true,
-                        tension: 0.3
+                        tension: 0.4
                     },
                     {
-                        label: 'Resolved',
-                        data: chartData.trends.resolved,
-                        borderColor: '#10b981',
-                        backgroundColor: 'transparent',
-                        borderDash: [5, 5],
-                        tension: 0.3
+                        label: "Resolved",
+                        data: rawTrend.resolved,
+                        borderColor: "#10b981",
+                        backgroundColor: "rgba(16, 185, 129, 0.1)",
+                        fill: true,
+                        tension: 0.4
                     }
                 ]
             },
@@ -414,23 +336,17 @@ document.addEventListener("DOMContentLoaded", function() {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { position: 'top', labels: { color: '#94a3b8', font: { size: 10 } } }
+                    legend: {
+                        labels: { color: "#94a3b8" }
+                    }
                 },
                 scales: {
-                    x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { display: false } },
-                    y: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                    x: { ticks: { color: "#64748b" }, grid: { display: false } },
+                    y: { ticks: { color: "#64748b" }, grid: { color: "rgba(255,255,255,0.05)" } }
                 }
             }
         });
     }
 });
 </script>
-
-<style>
-@keyframes pulse {
-    0% { transform: scale(0.95); opacity: 0.7; }
-    50% { transform: scale(1.3); opacity: 1; }
-    100% { transform: scale(0.95); opacity: 0.7; }
-}
-</style>
 {% endblock %}

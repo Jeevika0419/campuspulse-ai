@@ -1,121 +1,255 @@
 {% extends "base.html" %}
 
-{% block title %}Maintenance Dispatch{% endblock %}
+{% block title %}Field Ops & Maintenance Dispatch{% endblock %}
 {% block page_heading %}Field Engineering & Ops Dispatch{% endblock %}
 
 {% block content %}
-<!-- Maintenance Stats Grid -->
-<div class="stats-grid">
-    <div class="stat-card">
-        <div class="stat-info">
-            <div class="stat-label">Assigned Work Orders</div>
-            <div class="stat-value">{{ stats.total_assigned }}</div>
+<!-- Tactical Operations Header Strip -->
+<div style="background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9)); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: var(--radius-lg); padding: 18px 24px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+    <div style="display: flex; align-items: center; gap: 14px;">
+        <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
+            🛠️
         </div>
-        <div class="stat-icon icon-blue">📋</div>
+        <div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-weight: 700; font-size: 1.1rem; color: #fff;">{{ user_name or 'Chief Maintenance Officer' }}</span>
+                <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); font-size: 0.72rem;">
+                    ● Active Shift: Morning (08:00 - 18:00)
+                </span>
+            </div>
+            <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 2px;">
+                Field Dispatch Unit #04 &bull; Priority Response SLA Active &bull; Emergency Dispatch Protocol Enabled
+            </div>
+        </div>
     </div>
 
-    <div class="stat-card">
-        <div class="stat-info">
-            <div class="stat-label">Pending Start</div>
-            <div class="stat-value" style="color: #fbbf24;">{{ stats.pending_start }}</div>
-        </div>
-        <div class="stat-icon icon-amber">⏳</div>
-    </div>
-
-    <div class="stat-card">
-        <div class="stat-info">
-            <div class="stat-label">Active / In Progress</div>
-            <div class="stat-value" style="color: #60a5fa;">{{ stats.in_progress }}</div>
-        </div>
-        <div class="stat-icon icon-cyan">⚡</div>
-    </div>
-
-    <div class="stat-card">
-        <div class="stat-info">
-            <div class="stat-label">Critical Escalations</div>
-            <div class="stat-value" style="color: #f87171;">{{ stats.critical_count }}</div>
-        </div>
-        <div class="stat-icon icon-rose">🚨</div>
-    </div>
-
-    <div class="stat-card">
-        <div class="stat-info">
-            <div class="stat-label">Resolved Work Orders</div>
-            <div class="stat-value" style="color: #34d399;">{{ stats.resolved }}</div>
-        </div>
-        <div class="stat-icon icon-emerald">✅</div>
+    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <a href="{{ url_for('issues.list_issues') }}" class="btn btn-outline btn-sm">
+            <span>📋 Full Issue Registry</span>
+        </a>
+        <a href="#critical-dispatch" class="btn btn-sm" style="background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #f87171;">
+            <span>🚨 Critical Alerts ({{ stats.critical_count }})</span>
+        </a>
     </div>
 </div>
 
-<!-- Active Task Queue -->
-<div class="card">
-    <div class="card-header">
-        <div class="card-title">
-            <span>🛠️</span>
-            <span>Assigned Maintenance Queue</span>
+<!-- Tactical Quick Numbers Band (Distinct from Admin) -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-bottom: 24px;">
+    <!-- Total Workload -->
+    <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;">
+        <div>
+            <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600;">Assigned Workload</div>
+            <div style="font-size: 1.8rem; font-weight: 800; color: #fff; font-family: var(--font-heading); margin-top: 2px;">{{ stats.total_assigned }}</div>
         </div>
-        <a href="{{ url_for('issues.list_issues') }}" style="font-size: 0.8rem; color: var(--accent-cyan);">View All Work Orders →</a>
+        <div style="font-size: 1.6rem; opacity: 0.8;">📋</div>
     </div>
 
-    {% if assigned_issues and assigned_issues|length > 0 %}
-        <div class="table-responsive">
-            <table class="custom-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Category</th>
-                        <th>Location</th>
-                        <th>Description</th>
-                        <th>Priority</th>
-                        <th>Recurrence Risk</th>
-                        <th>Status</th>
-                        <th>Assigned Team</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for issue in assigned_issues %}
-                        <tr>
-                            <td style="font-weight: 700; color: var(--accent-cyan);">#{{ issue.issue_id }}</td>
-                            <td style="font-weight: 600;">{{ issue.issue_type }}</td>
-                            <td style="color: var(--text-muted); font-size: 0.85rem;">{{ issue.location }}</td>
-                            <td style="font-size: 0.85rem; max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                {{ issue.description }}
-                            </td>
-                            <td>
-                                <span class="badge badge-priority-{{ (issue.priority or 'medium').lower() }}">
-                                    {{ issue.priority or 'Medium' }}
-                                </span>
-                            </td>
-                            <td>
-                                <span class="badge badge-risk-{{ (issue.recurrence_risk or 'low').lower() }}">
-                                    {{ issue.recurrence_risk or 'Low' }}
-                                </span>
-                            </td>
-                            <td>
-                                <span class="badge badge-{{ issue.status.lower().replace(' ', '-') }}">
-                                    {{ issue.status }}
-                                </span>
-                            </td>
-                            <td style="color: var(--text-dim); font-size: 0.82rem;">
-                                {{ issue.assigned_team_name }}
-                            </td>
-                            <td>
-                                <a href="{{ url_for('issues.view_issue', issue_id=issue.issue_id) }}" class="btn btn-primary btn-sm">
-                                    <span>Manage</span>
-                                </a>
-                            </td>
-                        </tr>
+    <!-- Awaiting Start -->
+    <div style="background: rgba(251, 191, 36, 0.04); border: 1px solid rgba(251, 191, 36, 0.3); border-radius: var(--radius-md); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;">
+        <div>
+            <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #fbbf24; font-weight: 600;">Pending Inspection</div>
+            <div style="font-size: 1.8rem; font-weight: 800; color: #fbbf24; font-family: var(--font-heading); margin-top: 2px;">{{ stats.pending_start }}</div>
+        </div>
+        <div style="font-size: 1.6rem;">⏳</div>
+    </div>
+
+    <!-- In Progress -->
+    <div style="background: rgba(56, 189, 248, 0.04); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: var(--radius-md); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;">
+        <div>
+            <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #38bdf8; font-weight: 600;">Active in Field</div>
+            <div style="font-size: 1.8rem; font-weight: 800; color: #38bdf8; font-family: var(--font-heading); margin-top: 2px;">{{ stats.in_progress }}</div>
+        </div>
+        <div style="font-size: 1.6rem;">⚡</div>
+    </div>
+
+    <!-- Critical Incidents -->
+    <div style="background: rgba(239, 68, 68, 0.06); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: var(--radius-md); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;">
+        <div>
+            <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #f87171; font-weight: 600;">High / Critical Hazards</div>
+            <div style="font-size: 1.8rem; font-weight: 800; color: #f87171; font-family: var(--font-heading); margin-top: 2px;">{{ stats.critical_count }}</div>
+        </div>
+        <div style="font-size: 1.6rem;">🚨</div>
+    </div>
+
+    <!-- Resolved -->
+    <div style="background: rgba(16, 185, 129, 0.04); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: var(--radius-md); padding: 16px 20px; display: flex; align-items: center; justify-content: space-between;">
+        <div>
+            <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #34d399; font-weight: 600;">Repairs Completed</div>
+            <div style="font-size: 1.8rem; font-weight: 800; color: #34d399; font-family: var(--font-heading); margin-top: 2px;">{{ stats.resolved }}</div>
+        </div>
+        <div style="font-size: 1.6rem;">✅</div>
+    </div>
+</div>
+
+<!-- 🚨 High-Priority Emergency Dispatch Section (Critical Incident Hotlist) -->
+{% if critical_emergencies and critical_emergencies|length > 0 %}
+<div id="critical-dispatch" class="card" style="border-color: rgba(239, 68, 68, 0.5); background: rgba(239, 68, 68, 0.03); margin-bottom: 24px; padding: 20px;">
+    <div class="card-header" style="margin-bottom: 16px; border-bottom: 1px solid rgba(239, 68, 68, 0.2); padding-bottom: 12px;">
+        <div class="card-title" style="color: #f87171; display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 1.2rem;">🚨</span>
+            <span style="font-weight: 700;">Immediate Field Dispatch Required ({{ critical_emergencies|length }} Critical Incidents)</span>
+        </div>
+        <span class="badge" style="background: #ef4444; color: #fff; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">
+            Safety Escalate
+        </span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
+        {% for c in critical_emergencies %}
+            <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span style="font-weight: 800; color: #f87171; font-size: 0.9rem;">#{{ c.issue_id }} &bull; {{ c.issue_type }}</span>
+                        <span class="badge badge-priority-critical" style="font-size: 0.68rem;">CRITICAL</span>
+                    </div>
+                    <div style="font-size: 0.84rem; color: #fff; font-weight: 600; margin-bottom: 4px;">📍 {{ c.location }}</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 12px;">
+                        {{ c.description }}
+                    </div>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.05);">
+                    <span style="font-size: 0.75rem; color: #fbbf24;">⏱️ {{ c.sla.label }}</span>
+                    <a href="{{ url_for('issues.view_issue', issue_id=c.issue_id) }}" class="btn btn-primary btn-sm" style="padding: 4px 12px; font-size: 0.75rem; background: #ef4444; border: none;">
+                        <span>Dispatch &bull; Inspect →</span>
+                    </a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- TACTICAL KANBAN WORK ORDER PIPELINE (Totally unique layout!) -->
+<div class="card" style="padding: 24px;">
+    <div class="card-header" style="margin-bottom: 20px;">
+        <div>
+            <div class="card-title">
+                <span>🔧</span>
+                <span>Work Order Field Operations Pipeline</span>
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
+                Live operational pipeline organized by technician execution status
+            </div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+            <a href="{{ url_for('issues.list_issues') }}" class="btn btn-outline btn-sm">
+                <span>View Full Table View</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- 3-Column Kanban Layout -->
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+        
+        <!-- COLUMN 1: Pending Inspection / Assigned -->
+        <div style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(251, 191, 36, 0.25); border-radius: var(--radius-lg); padding: 16px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid rgba(251, 191, 36, 0.2);">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="width: 10px; height: 10px; border-radius: 50%; background: #fbbf24;"></span>
+                    <span style="font-weight: 700; font-size: 0.95rem; color: #fff;">Awaiting Start</span>
+                </div>
+                <span class="badge" style="background: rgba(251, 191, 36, 0.2); color: #fbbf24; font-weight: 700;">{{ pending_issues|length }}</span>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                {% if pending_issues and pending_issues|length > 0 %}
+                    {% for item in pending_issues %}
+                        <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 14px; transition: var(--transition);">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                <span style="font-weight: 700; color: var(--accent-cyan); font-size: 0.85rem;">#{{ item.issue_id }}</span>
+                                <span class="badge badge-priority-{{ (item.priority or 'medium').lower() }}" style="font-size: 0.65rem;">{{ item.priority }}</span>
+                            </div>
+                            <div style="font-weight: 600; font-size: 0.88rem; color: #fff; margin-bottom: 4px;">{{ item.issue_type }}</div>
+                            <div style="font-size: 0.78rem; color: var(--text-dim); margin-bottom: 8px;">📍 {{ item.location }}</div>
+                            <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.3; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                {{ item.description }}
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px;">
+                                <span style="color: #fbbf24;">{{ item.sla.label }}</span>
+                                <a href="{{ url_for('issues.view_issue', issue_id=item.issue_id) }}" style="color: var(--accent-cyan); font-weight: 600;">Inspect →</a>
+                            </div>
+                        </div>
                     {% endfor %}
-                </tbody>
-            </table>
+                {% else %}
+                    <div style="text-align: center; padding: 24px; color: var(--text-dim); font-size: 0.82rem;">
+                        No pending work orders awaiting start.
+                    </div>
+                {% endif %}
+            </div>
         </div>
-    {% else %}
-        <div class="empty-state">
-            <div class="empty-icon">🎉</div>
-            <h3>No Pending Work Orders</h3>
-            <p>All assigned infrastructure repairs are currently up to date! As issues get assigned to your maintenance teams by administration, they will appear in this prioritized queue.</p>
+
+        <!-- COLUMN 2: Active in Field / In Progress -->
+        <div style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: var(--radius-lg); padding: 16px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid rgba(56, 189, 248, 0.2);">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="width: 10px; height: 10px; border-radius: 50%; background: #38bdf8;"></span>
+                    <span style="font-weight: 700; font-size: 0.95rem; color: #fff;">Under Repair</span>
+                </div>
+                <span class="badge" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; font-weight: 700;">{{ in_progress_issues|length }}</span>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                {% if in_progress_issues and in_progress_issues|length > 0 %}
+                    {% for item in in_progress_issues %}
+                        <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: var(--radius-md); padding: 14px; transition: var(--transition);">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                <span style="font-weight: 700; color: #38bdf8; font-size: 0.85rem;">#{{ item.issue_id }}</span>
+                                <span class="badge badge-priority-{{ (item.priority or 'medium').lower() }}" style="font-size: 0.65rem;">{{ item.priority }}</span>
+                            </div>
+                            <div style="font-weight: 600; font-size: 0.88rem; color: #fff; margin-bottom: 4px;">{{ item.issue_type }}</div>
+                            <div style="font-size: 0.78rem; color: var(--text-dim); margin-bottom: 8px;">📍 {{ item.location }}</div>
+                            <div style="font-size: 0.78rem; color: var(--text-muted); line-height: 1.3; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                {{ item.description }}
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px;">
+                                <span class="badge badge-in-progress" style="font-size: 0.65rem;">⚡ Active</span>
+                                <a href="{{ url_for('issues.view_issue', issue_id=item.issue_id) }}" style="color: #38bdf8; font-weight: 600;">Update Status →</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="text-align: center; padding: 24px; color: var(--text-dim); font-size: 0.82rem;">
+                        No active field repairs currently running.
+                    </div>
+                {% endif %}
+            </div>
         </div>
-    {% endif %}
+
+        <!-- COLUMN 3: Resolved / Quality Sign-Off -->
+        <div style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: var(--radius-lg); padding: 16px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid rgba(16, 185, 129, 0.2);">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="width: 10px; height: 10px; border-radius: 50%; background: #34d399;"></span>
+                    <span style="font-weight: 700; font-size: 0.95rem; color: #fff;">Repairs Signed Off</span>
+                </div>
+                <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; font-weight: 700;">{{ resolved_issues|length }}</span>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                {% if resolved_issues and resolved_issues|length > 0 %}
+                    {% for item in resolved_issues %}
+                        <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: var(--radius-md); padding: 14px; transition: var(--transition);">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                <span style="font-weight: 700; color: #34d399; font-size: 0.85rem;">#{{ item.issue_id }}</span>
+                                <span class="badge badge-resolved" style="font-size: 0.65rem;">✓ Resolved</span>
+                            </div>
+                            <div style="font-weight: 600; font-size: 0.88rem; color: #fff; margin-bottom: 4px;">{{ item.issue_type }}</div>
+                            <div style="font-size: 0.78rem; color: var(--text-dim); margin-bottom: 8px;">📍 {{ item.location }}</div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px;">
+                                <span style="color: var(--text-dim);">Team: {{ item.assigned_team_name or 'General' }}</span>
+                                <a href="{{ url_for('issues.view_issue', issue_id=item.issue_id) }}" style="color: #34d399; font-weight: 600;">View Proof →</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="text-align: center; padding: 24px; color: var(--text-dim); font-size: 0.82rem;">
+                        No resolved work orders yet.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
 </div>
 {% endblock %}

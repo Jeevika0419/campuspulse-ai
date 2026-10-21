@@ -29,19 +29,31 @@ class AWSService:
 
     def _initialize_clients(self):
         """Initializes Boto3 clients with credentials or EC2 instance profile."""
+        if not self.is_enabled:
+            logger.info("AWS integration disabled or credentials not provided; running in hybrid-simulation mode.")
+            return
+
         try:
             client_kwargs = {"region_name": self.region}
+            # Only supply static keys if both are explicitly provided;
+            # otherwise Boto3 automatically discovers EC2 IAM instance profiles via AWS STS.
             if config.AWS_ACCESS_KEY_ID and config.AWS_SECRET_ACCESS_KEY:
                 client_kwargs["aws_access_key_id"] = config.AWS_ACCESS_KEY_ID
                 client_kwargs["aws_secret_access_key"] = config.AWS_SECRET_ACCESS_KEY
+                if getattr(config, "AWS_SESSION_TOKEN", None):
+                    client_kwargs["aws_session_token"] = config.AWS_SESSION_TOKEN
 
             self._s3_client = boto3.client("s3", **client_kwargs)
             self._sns_client = boto3.client("sns", **client_kwargs)
             self._cw_client = boto3.client("cloudwatch", **client_kwargs)
             logger.info(f"AWS Boto3 clients successfully initialized in region {self.region}")
         except Exception as e:
-            logger.warning(f"AWS credentials not detected; running in hybrid-simulation mode: {e}")
+            # Safe diagnostic: do not print or leak credential contents
+            logger.warning(f"AWS client initialization error ({type(e).__name__}); falling back to hybrid-simulation mode: {e}")
             self.is_enabled = False
+            self._s3_client = None
+            self._sns_client = None
+            self._cw_client = None
 
     # ─────────────────────────────────────────────────────────────
     # 1. AWS S3 — Issue Attachment Object Storage
@@ -104,10 +116,18 @@ class AWSService:
     # 2. AWS SNS — Push Notifications for Critical Alerts & SLA
     # ─────────────────────────────────────────────────────────────
     def publish_sns_alert(self, subject, message, attributes=None):
+        print("DEBUG: publish_sns_alert function called", flush=True)
         """
         Publishes real-time push alert via AWS Simple Notification Service (SNS).
         Broadcasts to maintenance staff SMS, email subscribers, and mobile push.
         """
+        
+        print("DEBUG AWS enabled:", self.is_enabled, flush=True)
+        print("DEBUG SNS client exists:", self._sns_client is not None, flush=True)
+        print("DEBUG SNS topic configured:", bool(self.sns_topic_arn), flush=True)
+        print("DEBUG AWS region:", self.region, flush=True)
+
+        
         if not self.is_enabled or not self._sns_client or not self.sns_topic_arn:
             logger.info(f"[SIMULATED AWS SNS] Subject: {subject} | Alert: {message}")
             return {

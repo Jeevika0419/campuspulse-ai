@@ -22,6 +22,18 @@ def get_sla_status(sla_deadline, status, resolved_at=None):
     if not sla_deadline:
         return {"badge": "neutral", "label": "No SLA", "is_breached": False}
 
+    if isinstance(sla_deadline, str):
+        try:
+            sla_deadline = datetime.fromisoformat(sla_deadline.replace("Z", ""))
+        except Exception:
+            sla_deadline = datetime.strptime(sla_deadline, "%Y-%m-%d %H:%M:%S")
+
+    if isinstance(resolved_at, str):
+        try:
+            resolved_at = datetime.fromisoformat(resolved_at.replace("Z", ""))
+        except Exception:
+            resolved_at = datetime.strptime(resolved_at, "%Y-%m-%d %H:%M:%S")
+
     now = datetime.now()
 
     # If issue has been resolved or closed

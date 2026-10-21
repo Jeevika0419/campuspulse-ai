@@ -246,3 +246,88 @@ def seed_data_route():
     result = seed_realistic_demo_data()
     flash(result.get("message", "Demo data processed."), "info")
     return redirect(url_for("admin.dashboard"))
+
+
+@admin_bp.route("/aws-cloud")
+@login_required
+def aws_cloud_architecture():
+    """
+    Interactive AWS Cloud Architecture Command Center.
+    Presents the end-to-end cloud infrastructure topology:
+    EC2, RDS, S3, IAM, VPC, CloudWatch, and SNS.
+    """
+    from services.aws_service import aws_service
+    import os
+
+    aws_status = aws_service.get_aws_status()
+
+    # Load snippets of IaC files if available
+    cfn_path = os.path.join(os.path.dirname(__file__), "..", "aws", "cloudformation", "campus_pulse_cfn.yaml")
+    tf_path = os.path.join(os.path.dirname(__file__), "..", "aws", "terraform", "main.tf")
+    iam_path = os.path.join(os.path.dirname(__file__), "..", "aws", "iam", "campuspulse_ec2_iam_policy.json")
+
+    cfn_code = ""
+    tf_code = ""
+    iam_code = ""
+
+    try:
+        if os.path.exists(cfn_path):
+            with open(cfn_path, "r", encoding="utf-8") as f:
+                cfn_code = f.read()
+    except Exception:
+        pass
+
+    try:
+        if os.path.exists(tf_path):
+            with open(tf_path, "r", encoding="utf-8") as f:
+                tf_code = f.read()
+    except Exception:
+        pass
+
+    try:
+        if os.path.exists(iam_path):
+            with open(iam_path, "r", encoding="utf-8") as f:
+                iam_code = f.read()
+    except Exception:
+        pass
+
+    return render_template(
+        "admin/aws_architecture.html",
+        aws_status=aws_status,
+        cfn_code=cfn_code,
+        tf_code=tf_code,
+        iam_code=iam_code
+    )
+
+
+@admin_bp.route("/aws-cloud/test-sns", methods=["POST"])
+@login_required
+def test_aws_sns():
+    """Triggers an on-demand test dispatch via AWS SNS pub/sub."""
+    from services.aws_service import aws_service
+    test_result = aws_service.send_critical_issue_alert(
+        issue_id=999,
+        category="Electrical & Power Systems",
+        location="Main Campus Substation (Diagnostic Test)",
+        priority="Critical"
+    )
+    status = test_result.get("status", "unknown")
+    msg_id = test_result.get("message_id", "N/A")
+    flash(f"⚡ AWS SNS Dispatch executed successfully! Status: [{status.upper()}], MessageId: {msg_id}", "success")
+    return redirect(url_for("admin.aws_cloud_architecture"))
+
+
+@admin_bp.route("/aws-cloud/test-metric", methods=["POST"])
+@login_required
+def test_aws_metric():
+    """Triggers an on-demand custom metric recording to Amazon CloudWatch."""
+    from services.aws_service import aws_service
+    res = aws_service.put_metric_data(
+        metric_name="DiagnosticHealthHeartbeat",
+        value=1.0,
+        unit="Count",
+        dimensions=[{"Name": "Source", "Value": "AdminDashboardTest"}]
+    )
+    flash("📊 Amazon CloudWatch telemetry metric 'DiagnosticHealthHeartbeat' successfully recorded!", "success")
+    return redirect(url_for("admin.aws_cloud_architecture"))
+

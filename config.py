@@ -21,11 +21,16 @@ MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB max upload
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
 
 # AWS Cloud Configuration (EC2, RDS, S3, SNS, CloudWatch)
-AWS_REGION = os.getenv("AWS_REGION", "ap-south-1")
+AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID", "")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "")
+AWS_SESSION_TOKEN = os.getenv("AWS_SESSION_TOKEN", "")
 AWS_S3_BUCKET = os.getenv("AWS_S3_BUCKET", "campuspulse-issue-attachments")
 AWS_SNS_TOPIC_ARN = os.getenv("AWS_SNS_TOPIC_ARN", "")
 AWS_CLOUDWATCH_NAMESPACE = os.getenv("AWS_CLOUDWATCH_NAMESPACE", "CampusPulse/Infrastructure")
-# Auto-enable AWS services if credentials exist or if explicitly forced
-AWS_ENABLED = bool(os.getenv("AWS_ACCESS_KEY_ID") and os.getenv("AWS_SECRET_ACCESS_KEY"))
+# Auto-enable AWS services if explicitly configured or if static credentials exist
+_raw_aws_enabled = os.getenv("AWS_ENABLED")
+if _raw_aws_enabled is not None:
+    AWS_ENABLED = _raw_aws_enabled.strip().lower() in ("true", "1", "yes")
+else:
+    AWS_ENABLED = bool(AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY)

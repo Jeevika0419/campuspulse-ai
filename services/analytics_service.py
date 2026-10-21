@@ -112,6 +112,11 @@ def get_chart_data():
                 "labels": [t["month_label"] for t in monthly_trends],
                 "reported": [t["total_count"] for t in monthly_trends],
                 "resolved": [t["resolved_count"] for t in monthly_trends]
+            },
+            "trend": {
+                "labels": [t["month_label"] for t in monthly_trends],
+                "reported": [t["total_count"] for t in monthly_trends],
+                "resolved": [t["resolved_count"] for t in monthly_trends]
             }
         }
     finally:
